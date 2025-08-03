@@ -1,0 +1,43 @@
+query meUser {
+  meUser {
+    _id
+    username
+    firstName
+    lastName
+    spotifyId
+    email
+    bio
+    dob
+    type
+    isAccountVerified
+    isProfileCompleted
+    deviceDetails
+    intro
+    instagramLink
+    topArtists {
+      name
+    }
+    topTracks {
+      name
+    }
+    recentlyPlayed {
+      name
+    }
+    followers
+    followings
+    blockedByMe
+    isPrivate
+  }
+}
+
+mutation saveUserToken($input: UserToken!) {
+  saveUserTokens(input: $input)
+}
+
+mutation userSingIn($input: UserSignInInput!) {
+  userSingIn(input: $input)
+}
+
+query checkById($id: String!) {
+  checkById(id: $id)
+}
