@@ -110,7 +110,7 @@ const OnboardingForm = () => {
         const res = await uploadToCloudinary(
           profilePic,
           "muzup/profiles",
-          session?.user.id ?? "",
+          session?.user.id ?? new Date().toISOString(),
           "image"
         );
         if (res.error) {

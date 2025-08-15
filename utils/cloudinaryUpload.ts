@@ -22,13 +22,10 @@ export async function uploadToCloudinary(
   try {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append(
-      "upload_preset",
-      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
-    );
+    formData.append("upload_preset", "MuzupApp");
+
     formData.append("folder", folder);
     formData.append("public_id", publicId);
-    formData.append("overwrite", "true");
 
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
     const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
