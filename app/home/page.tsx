@@ -20,9 +20,9 @@ async function getMeUser() {
 
 async function Page() {
   const user = await getMeUser();
-  // if (!user || !user.isProfileCompleted) {
-  //   redirect("/onboarding");
-  // }
+  if (!user || !user.isProfileCompleted) {
+    redirect("/onboarding");
+  }
 
   return (
     <div className="text-white">
