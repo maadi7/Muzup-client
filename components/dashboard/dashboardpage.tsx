@@ -5,8 +5,7 @@ import { Sidebar } from "@/types/type";
 const DashBoard = () => {
   return (
     <div>
-      ff
-      <div></div>
+      <div className="ml-18"> Main dashboard</div>
     </div>
   );
 };
