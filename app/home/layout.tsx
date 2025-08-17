@@ -13,15 +13,11 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`antialiased text-white`}>
-        <div className="flex min-h-screen p-2">
-          <DashboardSidebar />
-          <main className="flex-1 overflow-x-hidden">
-            {children}
-          </main>
-        </div>
-      </body>
-    </html>
+    <div className="flex min-h-screen p-2">
+      <DashboardSidebar />
+      <main className="flex-1 overflow-x-hidden">
+        {children}
+      </main>
+    </div>
   );
 }

@@ -37,10 +37,91 @@ export type Artist = {
   type?: Maybe<Scalars['String']['output']>;
 };
 
+export type CommentInput = {
+  content: Scalars['String']['input'];
+  parentId?: InputMaybe<Scalars['ID']['input']>;
+  postId: Scalars['ID']['input'];
+  replyToUserId?: InputMaybe<Scalars['ID']['input']>;
+  taggedUserIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type FriendReqeust = {
+  __typename?: 'FriendReqeust';
+  _id: Scalars['ID']['output'];
+  createdAt: Scalars['DateTimeISO']['output'];
+  recieverId: User;
+  senderId: User;
+  status: RequestStatus;
+  updatedAt: Scalars['DateTimeISO']['output'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
+  acceptRequest: Scalars['Boolean']['output'];
+  addComment: Scalars['Boolean']['output'];
+  addReaction: Scalars['Boolean']['output'];
+  blockUser: Scalars['Boolean']['output'];
+  createPost: Scalars['Boolean']['output'];
+  deleteComment: Scalars['Boolean']['output'];
+  deletePost: Scalars['Boolean']['output'];
+  editProfile: Scalars['Boolean']['output'];
+  removeReaction: Scalars['Boolean']['output'];
+  replyToComment: Scalars['Boolean']['output'];
   saveUserTokens: Scalars['Boolean']['output'];
+  sendRequest: Scalars['Boolean']['output'];
   userSingIn: Scalars['Boolean']['output'];
+};
+
+
+export type MutationAcceptRequestArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type MutationAddCommentArgs = {
+  input: CommentInput;
+};
+
+
+export type MutationAddReactionArgs = {
+  emoji: Scalars['String']['input'];
+  postId: Scalars['String']['input'];
+};
+
+
+export type MutationBlockUserArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type MutationCreatePostArgs = {
+  input: PostInput;
+};
+
+
+export type MutationDeleteCommentArgs = {
+  commentId: Scalars['String']['input'];
+};
+
+
+export type MutationDeletePostArgs = {
+  postId: Scalars['String']['input'];
+};
+
+
+export type MutationEditProfileArgs = {
+  input: UserProfileInput;
+};
+
+
+export type MutationRemoveReactionArgs = {
+  emoji: Scalars['String']['input'];
+  postId: Scalars['String']['input'];
+};
+
+
+export type MutationReplyToCommentArgs = {
+  input: CommentInput;
 };
 
 
@@ -49,15 +130,57 @@ export type MutationSaveUserTokensArgs = {
 };
 
 
+export type MutationSendRequestArgs = {
+  id: Scalars['String']['input'];
+};
+
+
 export type MutationUserSingInArgs = {
   input: UserSignInInput;
 };
 
+export type Post = {
+  __typename?: 'Post';
+  _id: Scalars['ID']['output'];
+  caption?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['DateTimeISO']['output'];
+  postType?: Maybe<PostType>;
+  postUrl?: Maybe<Scalars['String']['output']>;
+  reactions?: Maybe<Array<PostReaction>>;
+  updatedAt: Scalars['DateTimeISO']['output'];
+  user: User;
+  visibleTo: Array<User>;
+  waveUrl?: Maybe<Scalars['String']['output']>;
+};
+
+export type PostInput = {
+  caption?: InputMaybe<Scalars['String']['input']>;
+  postType?: InputMaybe<PostType>;
+  postUrl?: InputMaybe<Scalars['String']['input']>;
+  visibleTo?: InputMaybe<Array<Scalars['String']['input']>>;
+  waveUrl?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type PostReaction = {
+  __typename?: 'PostReaction';
+  emoji: Scalars['String']['output'];
+  users: Array<User>;
+};
+
+/** Enum For Type of Post i.e Image, Audio, Video */
+export enum PostType {
+  Audio = 'Audio',
+  Image = 'Image',
+  Video = 'Video'
+}
+
 export type Query = {
   __typename?: 'Query';
   checkById: Scalars['Boolean']['output'];
+  getPostById: Post;
+  getTimelinePosts: Array<Post>;
   meUser?: Maybe<User>;
-  verifyOtpForPayout: Scalars['String']['output'];
+  searchUsers: Array<User>;
 };
 
 
@@ -66,12 +189,19 @@ export type QueryCheckByIdArgs = {
 };
 
 
-export type QueryVerifyOtpForPayoutArgs = {
-  email: Scalars['String']['input'];
-  emailOtp: Scalars['String']['input'];
-  key: Scalars['String']['input'];
-  number: Scalars['String']['input'];
-  numberOtp: Scalars['String']['input'];
+export type QueryGetPostByIdArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryGetTimelinePostsArgs = {
+  limit: Scalars['Float']['input'];
+  page: Scalars['Float']['input'];
+};
+
+
+export type QuerySearchUsersArgs = {
+  query: Scalars['String']['input'];
 };
 
 export type RecentlyPlayed = {
@@ -87,6 +217,13 @@ export type RecentlyPlayed = {
   track_number?: Maybe<Scalars['Float']['output']>;
   type?: Maybe<Scalars['String']['output']>;
 };
+
+/** Enum For Request status of followers */
+export enum RequestStatus {
+  Accepted = 'Accepted',
+  Pending = 'Pending',
+  Rejected = 'Rejected'
+}
 
 export type Track = {
   __typename?: 'Track';
@@ -130,8 +267,10 @@ export type User = {
   lastLoggedIn?: Maybe<Scalars['DateTimeISO']['output']>;
   lastLoggedOut?: Maybe<Scalars['DateTimeISO']['output']>;
   lastName?: Maybe<Scalars['String']['output']>;
+  profilePic: Scalars['String']['output'];
   recentlyPlayed?: Maybe<Array<RecentlyPlayed>>;
   relistDate?: Maybe<Array<Scalars['DateTimeISO']['output']>>;
+  requestedTo?: Maybe<FriendReqeust>;
   spotifyAccessToken: Scalars['String']['output'];
   spotifyId: Scalars['String']['output'];
   spotifyRefreshToken: Scalars['String']['output'];
@@ -140,6 +279,14 @@ export type User = {
   type?: Maybe<UserType>;
   updatedAt: Scalars['DateTimeISO']['output'];
   username?: Maybe<Scalars['String']['output']>;
+};
+
+export type UserProfileInput = {
+  bio?: InputMaybe<Scalars['String']['input']>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  profilePic?: InputMaybe<Scalars['String']['input']>;
+  username?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UserSignInInput = {
@@ -169,6 +316,51 @@ export enum UserType {
   User = 'User'
 }
 
+export type CreatePostMutationVariables = Exact<{
+  input: PostInput;
+}>;
+
+
+export type CreatePostMutation = { __typename?: 'Mutation', createPost: boolean };
+
+export type DeletePostMutationVariables = Exact<{
+  postId: Scalars['String']['input'];
+}>;
+
+
+export type DeletePostMutation = { __typename?: 'Mutation', deletePost: boolean };
+
+export type AddReactionMutationVariables = Exact<{
+  postId: Scalars['String']['input'];
+  emoji: Scalars['String']['input'];
+}>;
+
+
+export type AddReactionMutation = { __typename?: 'Mutation', addReaction: boolean };
+
+export type RemoveReactionMutationVariables = Exact<{
+  postId: Scalars['String']['input'];
+  emoji: Scalars['String']['input'];
+}>;
+
+
+export type RemoveReactionMutation = { __typename?: 'Mutation', removeReaction: boolean };
+
+export type GetTimelinePostsQueryVariables = Exact<{
+  page: Scalars['Float']['input'];
+  limit: Scalars['Float']['input'];
+}>;
+
+
+export type GetTimelinePostsQuery = { __typename?: 'Query', getTimelinePosts: Array<{ __typename?: 'Post', _id: string, caption?: string | null, postType?: PostType | null, postUrl?: string | null, waveUrl?: string | null, createdAt: any, updatedAt: any, user: { __typename?: 'User', _id: string, username?: string | null, profilePic: string }, reactions?: Array<{ __typename?: 'PostReaction', emoji: string, users: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> | null, visibleTo: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> };
+
+export type GetPostByIdQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type GetPostByIdQuery = { __typename?: 'Query', getPostById: { __typename?: 'Post', _id: string, caption?: string | null, postType?: PostType | null, postUrl?: string | null, waveUrl?: string | null, createdAt: any, updatedAt: any, user: { __typename?: 'User', _id: string, username?: string | null, profilePic: string, isPrivate?: boolean | null }, reactions?: Array<{ __typename?: 'PostReaction', emoji: string, users: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> | null, visibleTo: Array<{ __typename?: 'User', _id: string, username?: string | null }> } };
+
 export type MeUserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -196,6 +388,85 @@ export type CheckByIdQueryVariables = Exact<{
 export type CheckByIdQuery = { __typename?: 'Query', checkById: boolean };
 
 
+export const CreatePostDocument = gql`
+    mutation createPost($input: PostInput!) {
+  createPost(input: $input)
+}
+    `;
+export const DeletePostDocument = gql`
+    mutation deletePost($postId: String!) {
+  deletePost(postId: $postId)
+}
+    `;
+export const AddReactionDocument = gql`
+    mutation addReaction($postId: String!, $emoji: String!) {
+  addReaction(postId: $postId, emoji: $emoji)
+}
+    `;
+export const RemoveReactionDocument = gql`
+    mutation removeReaction($postId: String!, $emoji: String!) {
+  removeReaction(postId: $postId, emoji: $emoji)
+}
+    `;
+export const GetTimelinePostsDocument = gql`
+    query getTimelinePosts($page: Float!, $limit: Float!) {
+  getTimelinePosts(page: $page, limit: $limit) {
+    _id
+    caption
+    postType
+    postUrl
+    waveUrl
+    createdAt
+    updatedAt
+    user {
+      _id
+      username
+      profilePic
+    }
+    reactions {
+      emoji
+      users {
+        _id
+        username
+      }
+    }
+    visibleTo {
+      _id
+      username
+    }
+  }
+}
+    `;
+export const GetPostByIdDocument = gql`
+    query getPostById($id: String!) {
+  getPostById(id: $id) {
+    _id
+    caption
+    postType
+    postUrl
+    waveUrl
+    createdAt
+    updatedAt
+    user {
+      _id
+      username
+      profilePic
+      isPrivate
+    }
+    reactions {
+      emoji
+      users {
+        _id
+        username
+      }
+    }
+    visibleTo {
+      _id
+      username
+    }
+  }
+}
+    `;
 export const MeUserDocument = gql`
     query meUser {
   meUser {
@@ -252,6 +523,24 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
+    createPost(variables: CreatePostMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreatePostMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreatePostMutation>({ document: CreatePostDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'createPost', 'mutation', variables);
+    },
+    deletePost(variables: DeletePostMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeletePostMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeletePostMutation>({ document: DeletePostDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'deletePost', 'mutation', variables);
+    },
+    addReaction(variables: AddReactionMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<AddReactionMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AddReactionMutation>({ document: AddReactionDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'addReaction', 'mutation', variables);
+    },
+    removeReaction(variables: RemoveReactionMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<RemoveReactionMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RemoveReactionMutation>({ document: RemoveReactionDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'removeReaction', 'mutation', variables);
+    },
+    getTimelinePosts(variables: GetTimelinePostsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetTimelinePostsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetTimelinePostsQuery>({ document: GetTimelinePostsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getTimelinePosts', 'query', variables);
+    },
+    getPostById(variables: GetPostByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetPostByIdQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetPostByIdQuery>({ document: GetPostByIdDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getPostById', 'query', variables);
+    },
     meUser(variables?: MeUserQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MeUserQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MeUserQuery>({ document: MeUserDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'meUser', 'query', variables);
     },

@@ -1,0 +1,77 @@
+# Mutations
+mutation createPost($input: PostInput!) {
+  createPost(input: $input)
+}
+
+mutation deletePost($postId: String!) {
+  deletePost(postId: $postId)
+}
+
+mutation addReaction($postId: String!, $emoji: String!) {
+  addReaction(postId: $postId, emoji: $emoji)
+}
+
+mutation removeReaction($postId: String!, $emoji: String!) {
+  removeReaction(postId: $postId, emoji: $emoji)
+}
+
+# Queries
+
+# Fetch timeline posts (paginated by page & limit)
+query getTimelinePosts($page: Float!, $limit: Float!) {
+  getTimelinePosts(page: $page, limit: $limit) {
+    _id
+    caption
+    postType
+    postUrl
+    waveUrl
+    createdAt
+    updatedAt
+    user {
+      _id
+      username
+      profilePic
+    }
+    reactions {
+      emoji
+      users {
+        _id
+        username
+      }
+    }
+    visibleTo {
+      _id
+      username
+    }
+  }
+}
+
+# Fetch single post by id (with access checks)
+query getPostById($id: String!) {
+  getPostById(id: $id) {
+    _id
+    caption
+    postType
+    postUrl
+    waveUrl
+    createdAt
+    updatedAt
+    user {
+      _id
+      username
+      profilePic
+      isPrivate
+    }
+    reactions {
+      emoji
+      users {
+        _id
+        username
+      }
+    }
+    visibleTo {
+      _id
+      username
+    }
+  }
+}

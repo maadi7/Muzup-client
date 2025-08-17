@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { Home, Grid3X3, User, LogOut, Menu, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
+import muzupLogo from "/assets/logo1.png";
 
 // Types for better TypeScript support
 interface NavigationItem {
@@ -19,7 +21,6 @@ interface SidebarProps {
 const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
   // Navigation items configuration
@@ -46,16 +47,10 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
 
   const handleLogoutClick = () => {
     console.log('Logging out...');
-    // Add your logout logic here
-    // router.push('/login');
   };
 
   const isActiveRoute = (href: string) => {
     return pathname === href;
-  };
-
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
   };
 
   // Mobile Bottom Navigation
@@ -71,10 +66,10 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
               <button
                 key={item.id}
                 onClick={() => handleNavigationClick(item)}
-                className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${
+                className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 cursor-pointer ${
                   isActive
                     ? "text-muzupColor"
-                    : "text-subTextColor hover:text-textColor"
+                    : "text-secondary hover:text-textColor"
                 }`}
               >
                 <IconComponent 
@@ -83,7 +78,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
                     isActive ? "text-muzupColor" : "text-current"
                   }`} 
                 />
-                <span className="text-xs mt-1 font-medium">{item.label}</span>
+                <span className=" mt-1 text-secondary">{item.label}</span>
               </button>
             );
           })}
@@ -91,39 +86,37 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
           {/* Logout button for mobile */}
           <button
             onClick={handleLogoutClick}
-            className="flex flex-col items-center justify-center p-2 rounded-lg text-subTextColor hover:text-textColor transition-all duration-200"
+            className="flex flex-col items-center justify-center p-2 rounded-lg text-secondary hover:text-textColor transition-all duration-200 cursor-pointer"
           >
             <LogOut size={24} />
-            <span className="text-xs mt-1 font-medium">Logout</span>
+            <span className="mt-1 text-secondary">Logout</span>
           </button>
         </div>
       </nav>
     );
-  }
+  };
 
   // Desktop Sidebar
   return (
     <>
       {/* Desktop Sidebar */}
       <aside 
-        className={`fixed lg:sticky top-0 left-0 bg-secondaryBg flex flex-col rounded-lg transition-all duration-300 z-40  ${
-          isOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0 lg:w-18'
-        } ${className} h-[calc(100vh-18px)]`}
+        className={`fixed lg:sticky top-0 left-0 bg-secondaryBg flex flex-col rounded-lg transition-all duration-300 z-40 w-64 ${className} h-[calc(100vh-18px)]`}
         role="navigation"
         aria-label="Main navigation"
       >
         {/* Logo Section */}
         <div className="p-6 border-b border-border/10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-muzupColor rounded-md flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-lg">🎵</span>
-              </div>
-              {isOpen && (
-                <h1 className="text-textColor font-bold text-xl transition-opacity duration-200">
-                  Muzzup
-                </h1>
-              )}
+          <div className="flex items-center justify-center">
+            <div className="w-full h-16 px-2">
+              <Image
+                src={muzupLogo}
+                alt="Muzup Logo"
+                width={200}
+                height={64}
+                className="object-cover w-full h-full rounded-sm"
+                priority
+              />
             </div>
           </div>
         </div>
@@ -140,13 +133,12 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
                 <button
                   key={item.id}
                   onClick={() => handleNavigationClick(item)}
-                  className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-left group relative ${
+                  className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-left group relative cursor-pointer ${
                     isActive
-                      ? "bg-muzupColor/10 text-muzupColor border border-muzupColor/20"
-                      : "text-subTextColor hover:text-textColor hover:bg-accent/50"
-                  } ${!isOpen ? 'justify-center' : ''}`}
+                      ? "text-muzupColor border border-muzupColor/20"
+                      : "text-secondary hover:text-textColor hover:bg-accent/50"
+                  }`}
                   aria-current={isActive ? "page" : undefined}
-                  title={!isOpen ? item.label : undefined}
                 >
                   <IconComponent 
                     size={20} 
@@ -154,18 +146,9 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
                       isActive ? "text-muzupColor" : "text-current"
                     }`} 
                   />
-                  {isOpen && (
-                    <span className="font-medium transition-opacity duration-200">
-                      {item.label}
-                    </span>
-                  )}
-                  
-                  {/* Tooltip for collapsed state */}
-                  {!isOpen && (
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-background text-textColor text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                      {item.label}
-                    </div>
-                  )}
+                  <span className="transition-opacity duration-200 text-secondary">
+                    {item.label}
+                  </span>
                 </button>
               );
             })}
@@ -176,24 +159,12 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
         <div className="p-4">
           <button
             onClick={handleLogoutClick}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-subTextColor hover:text-textColor hover:bg-accent/50 transition-all duration-200 group relative ${
-              !isOpen ? 'justify-center' : ''
-            }`}
-            title={!isOpen ? "Logout" : undefined}
+            className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-secondary hover:text-textColor hover:bg-accent/50 transition-all duration-200 group relative cursor-pointer"
           >
             <LogOut size={20} className="flex-shrink-0" />
-            {isOpen && (
-              <span className="font-medium transition-opacity duration-200">
-                Logout
-              </span>
-            )}
-            
-            {/* Tooltip for collapsed state */}
-            {!isOpen && (
-              <div className="absolute left-full ml-2 px-2 py-1 bg-background text-textColor text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                Logout
-              </div>
-            )}
+            <span className="transition-opacity duration-200 text-secondary">
+              Logout
+            </span>
           </button>
         </div>
       </aside>
