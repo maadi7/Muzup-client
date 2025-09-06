@@ -41,3 +41,30 @@ mutation userSingIn($input: UserSignInInput!) {
 query checkById($id: String!) {
   checkById(id: $id)
 }
+
+query getUserProfileInfo($id: String!, $page: Float!, $limit: Float!) {
+  getUserProfileInfo(id: $id, page: $page, limit: $limit) {
+    username
+    firstName
+    lastName
+    bio
+    profilePic
+    followersCount
+    followingsCount
+    posts {
+      posts {
+        _id
+        postUrl
+        waveUrl
+        createdAt
+        reactionsCount
+        commentsCount
+      }
+      totalCount
+      page
+      totalPages
+    }
+  }
+}
+
+

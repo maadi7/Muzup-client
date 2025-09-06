@@ -28,7 +28,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${Montserrat.variable} ${Lat.variable}`}>
       <SessionWrapper>
-        <body className={`antialiased`}>{children}</body>
+        <body className={`antialiased`}>
+          {children}
+        </body>
       </SessionWrapper>
     </html>
   );

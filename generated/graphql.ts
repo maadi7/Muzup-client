@@ -139,6 +139,14 @@ export type MutationUserSingInArgs = {
   input: UserSignInInput;
 };
 
+export type PaginatedUserPosts = {
+  __typename?: 'PaginatedUserPosts';
+  page: Scalars['Float']['output'];
+  posts: Array<UserPostInfo>;
+  totalCount: Scalars['Float']['output'];
+  totalPages: Scalars['Float']['output'];
+};
+
 export type Post = {
   __typename?: 'Post';
   _id: Scalars['ID']['output'];
@@ -179,6 +187,7 @@ export type Query = {
   checkById: Scalars['Boolean']['output'];
   getPostById: Post;
   getTimelinePosts: Array<Post>;
+  getUserProfileInfo: UserProfileInfo;
   meUser?: Maybe<User>;
   searchUsers: Array<User>;
 };
@@ -195,6 +204,13 @@ export type QueryGetPostByIdArgs = {
 
 
 export type QueryGetTimelinePostsArgs = {
+  limit: Scalars['Float']['input'];
+  page: Scalars['Float']['input'];
+};
+
+
+export type QueryGetUserProfileInfoArgs = {
+  id: Scalars['String']['input'];
   limit: Scalars['Float']['input'];
   page: Scalars['Float']['input'];
 };
@@ -281,6 +297,28 @@ export type User = {
   username?: Maybe<Scalars['String']['output']>;
 };
 
+export type UserPostInfo = {
+  __typename?: 'UserPostInfo';
+  _id: Scalars['ID']['output'];
+  commentsCount: Scalars['Float']['output'];
+  createdAt: Scalars['DateTimeISO']['output'];
+  postUrl?: Maybe<Scalars['String']['output']>;
+  reactionsCount: Scalars['Float']['output'];
+  waveUrl?: Maybe<Scalars['String']['output']>;
+};
+
+export type UserProfileInfo = {
+  __typename?: 'UserProfileInfo';
+  bio?: Maybe<Scalars['String']['output']>;
+  firstName: Scalars['String']['output'];
+  followersCount: Scalars['Float']['output'];
+  followingsCount: Scalars['Float']['output'];
+  lastName: Scalars['String']['output'];
+  posts: PaginatedUserPosts;
+  profilePic?: Maybe<Scalars['String']['output']>;
+  username: Scalars['String']['output'];
+};
+
 export type UserProfileInput = {
   bio?: InputMaybe<Scalars['String']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
@@ -315,6 +353,27 @@ export enum UserType {
   Artist = 'Artist',
   User = 'User'
 }
+
+export type AddCommentMutationVariables = Exact<{
+  input: CommentInput;
+}>;
+
+
+export type AddCommentMutation = { __typename?: 'Mutation', addComment: boolean };
+
+export type DeleteCommentMutationVariables = Exact<{
+  commentId: Scalars['String']['input'];
+}>;
+
+
+export type DeleteCommentMutation = { __typename?: 'Mutation', deleteComment: boolean };
+
+export type ReplyToCommentMutationVariables = Exact<{
+  input: CommentInput;
+}>;
+
+
+export type ReplyToCommentMutation = { __typename?: 'Mutation', replyToComment: boolean };
 
 export type CreatePostMutationVariables = Exact<{
   input: PostInput;
@@ -387,7 +446,31 @@ export type CheckByIdQueryVariables = Exact<{
 
 export type CheckByIdQuery = { __typename?: 'Query', checkById: boolean };
 
+export type GetUserProfileInfoQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+  page: Scalars['Float']['input'];
+  limit: Scalars['Float']['input'];
+}>;
 
+
+export type GetUserProfileInfoQuery = { __typename?: 'Query', getUserProfileInfo: { __typename?: 'UserProfileInfo', username: string, firstName: string, lastName: string, bio?: string | null, profilePic?: string | null, followersCount: number, followingsCount: number, posts: { __typename?: 'PaginatedUserPosts', totalCount: number, page: number, totalPages: number, posts: Array<{ __typename?: 'UserPostInfo', _id: string, postUrl?: string | null, waveUrl?: string | null, createdAt: any, reactionsCount: number, commentsCount: number }> } } };
+
+
+export const AddCommentDocument = gql`
+    mutation addComment($input: CommentInput!) {
+  addComment(input: $input)
+}
+    `;
+export const DeleteCommentDocument = gql`
+    mutation deleteComment($commentId: String!) {
+  deleteComment(commentId: $commentId)
+}
+    `;
+export const ReplyToCommentDocument = gql`
+    mutation replyToComment($input: CommentInput!) {
+  replyToComment(input: $input)
+}
+    `;
 export const CreatePostDocument = gql`
     mutation createPost($input: PostInput!) {
   createPost(input: $input)
@@ -515,6 +598,32 @@ export const CheckByIdDocument = gql`
   checkById(id: $id)
 }
     `;
+export const GetUserProfileInfoDocument = gql`
+    query getUserProfileInfo($id: String!, $page: Float!, $limit: Float!) {
+  getUserProfileInfo(id: $id, page: $page, limit: $limit) {
+    username
+    firstName
+    lastName
+    bio
+    profilePic
+    followersCount
+    followingsCount
+    posts {
+      posts {
+        _id
+        postUrl
+        waveUrl
+        createdAt
+        reactionsCount
+        commentsCount
+      }
+      totalCount
+      page
+      totalPages
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -523,6 +632,15 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
+    addComment(variables: AddCommentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<AddCommentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AddCommentMutation>({ document: AddCommentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'addComment', 'mutation', variables);
+    },
+    deleteComment(variables: DeleteCommentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteCommentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteCommentMutation>({ document: DeleteCommentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'deleteComment', 'mutation', variables);
+    },
+    replyToComment(variables: ReplyToCommentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReplyToCommentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReplyToCommentMutation>({ document: ReplyToCommentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'replyToComment', 'mutation', variables);
+    },
     createPost(variables: CreatePostMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreatePostMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreatePostMutation>({ document: CreatePostDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'createPost', 'mutation', variables);
     },
@@ -552,6 +670,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     checkById(variables: CheckByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CheckByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<CheckByIdQuery>({ document: CheckByIdDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'checkById', 'query', variables);
+    },
+    getUserProfileInfo(variables: GetUserProfileInfoQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetUserProfileInfoQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetUserProfileInfoQuery>({ document: GetUserProfileInfoDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getUserProfileInfo', 'query', variables);
     }
   };
 }

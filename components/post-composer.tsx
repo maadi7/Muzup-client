@@ -1,3 +1,4 @@
+// components/post-composer.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -21,9 +22,9 @@ export default function PostComposer({ onPostCreated }: { onPostCreated?: () => 
   const [preview, setPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [focused, setFocused] = useState(false);
 
   useEffect(() => {
-    // cleanup preview url on unmount
     return () => {
       if (preview) URL.revokeObjectURL(preview);
     };
@@ -40,9 +41,7 @@ export default function PostComposer({ onPostCreated }: { onPostCreated?: () => 
       return;
     }
 
-    // accept only single file (replace previous)
     setFile(f);
-
     if (preview) URL.revokeObjectURL(preview);
     setPreview(URL.createObjectURL(f));
   };
@@ -85,15 +84,11 @@ export default function PostComposer({ onPostCreated }: { onPostCreated?: () => 
       let postType: "Image" | "Video" | "Audio" | undefined;
 
       if (file) {
-        // if user provided both text + media, prioritize media for postType
         postType = guessPostType(file);
-
-        // Build publicId using user id or fallback timestamp
         const ownerId = (session as any)?.user?.id ?? Date.now().toString();
         const safeName = file.name.replace(/\s+/g, "-").slice(0, 64);
         const publicId = `${ownerId}-${Date.now()}-${safeName}`;
 
-        // Upload to Cloudinary via helper
         const resourceType = guessResourceType(file);
         const uploadRes: UploadResult = await uploadToCloudinary(file, "muzup/posts", publicId, resourceType);
 
@@ -105,26 +100,23 @@ export default function PostComposer({ onPostCreated }: { onPostCreated?: () => 
         if (uploadRes.waveformUrl) waveUrl = uploadRes.waveformUrl;
       }
 
-      // Build PostInput for server.
-      // IMPORTANT: do NOT include postType/postUrl if this is a text-only post.
       const input: any = {
         caption: content.trim() || undefined,
         visibleTo: [] as string[],
       };
 
       if (file) {
-        // include only when file exists
         input.postType = postType;
         input.postUrl = postUrl;
         if (waveUrl) input.waveUrl = waveUrl;
       }
 
-      // Call SDK - using 'as any' to avoid strict enum/casing TS issues if needed
       const res = await sdk.createPost({ input } as any);
 
       if (res?.createPost) {
         setContent("");
         clearFile();
+        setFocused(false);
         if (onPostCreated) onPostCreated();
       } else {
         setError("Failed to create post — server returned false.");
@@ -137,97 +129,267 @@ export default function PostComposer({ onPostCreated }: { onPostCreated?: () => 
     }
   };
 
+  const hasContent = content.trim().length > 0 || file;
+
   return (
     <div
-      className="rounded-lg border p-4 space-y-3"
+      className={`rounded-2xl backdrop-blur-sm shadow-lg transition-all duration-300 ${
+        focused ? "shadow-xl shadow-muzupColor/10" : "hover:shadow-xl"
+      }`}
       style={{
-        background: "var(--secondaryBg)",
-        borderColor: "var(--sidebar-border)",
+        background: "linear-gradient(135deg, var(--secondaryBg) 0%, var(--background) 100%)",
         fontFamily: "var(--font-secondary)",
       }}
     >
-      <textarea
-        className="w-full bg-transparent resize-none min-h-[96px] text-textColor placeholder:subTextColor outline-none"
-        placeholder="What's happening?"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        style={{ fontFamily: "var(--font-secondary)" }}
-      />
+      {/* Header */}
+      <div className="p-6 pb-4">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-muzupColor to-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+            {((session as any)?.user?.name ?? "You").charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div className="text-lg font-semibold text-textColor">Create a post</div>
+            <div className="text-sm text-subTextColor">Share what's on your mind</div>
+          </div>
+        </div>
 
+        {/* Text Input */}
+        <div className="relative">
+          <textarea
+            className={`w-full bg-transparent resize-none text-textColor placeholder:text-subTextColor outline-none transition-all duration-200 ${
+              focused ? "min-h-[120px]" : "min-h-[80px]"
+            }`}
+            placeholder="What's happening? Share your thoughts..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => !hasContent && setFocused(false)}
+            style={{ fontFamily: "var(--font-secondary)" }}
+          />
+
+          {/* Character Counter */}
+          {focused && (
+            <div className="absolute bottom-2 right-2 text-xs text-subTextColor">
+              {content.length}/280
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* File Preview */}
       {preview && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <div className="relative rounded overflow-hidden bg-background border border-border/10 p-1">
+        <div className="px-6 pb-4">
+          <div className="relative rounded-2xl overflow-hidden bg-background/20">
             {file?.type.startsWith("video/") ? (
-              <video src={preview} className="w-full h-32 object-cover rounded" controls />
+              <div className="relative">
+                <video src={preview} className="w-full max-h-80 object-cover" controls />
+                <div className="absolute top-3 left-3 px-2 py-1 bg-black/50 rounded-lg text-white text-xs font-medium backdrop-blur-sm">
+                  Video
+                </div>
+              </div>
             ) : file?.type.startsWith("audio/") ? (
-              <audio src={preview} className="w-full" controls />
+              <div className="p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white">
+                      <path d="M9 18V5l12-2v13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="6" cy="18" r="3" stroke="currentColor" strokeWidth="2"/>
+                      <circle cx="18" cy="16" r="3" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-textColor">{file.name}</div>
+                    <div className="text-sm text-subTextColor">Audio file • {Math.round(file.size / 1024)}KB</div>
+                  </div>
+                </div>
+                <audio src={preview} className="w-full" controls />
+              </div>
             ) : (
-              <img src={preview} alt="preview" className="w-full h-32 object-cover rounded" />
+              <div className="relative">
+                <img src={preview} alt="preview" className="w-full max-h-80 object-cover" />
+                <div className="absolute top-3 left-3 px-2 py-1 bg-black/50 rounded-lg text-white text-xs font-medium backdrop-blur-sm">
+                  Image
+                </div>
+              </div>
             )}
+
+            {/* Remove File Button */}
             <button
               onClick={clearFile}
-              className="absolute top-2 right-2 bg-background/70 rounded px-2 py-0.5 text-xs text-textColor hover:opacity-90"
+              className="absolute top-3 right-3 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-all backdrop-blur-sm"
               aria-label="Remove file"
             >
-              Remove
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
             </button>
           </div>
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {/* polished Attach button */}
-          <label
-            htmlFor="file-input"
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-border/10 bg-background hover:bg-accent/10 cursor-pointer select-none"
-            style={{ fontFamily: "var(--font-primary)" }}
-            title="Attach image, video or audio"
-          >
-            {/* paperclip icon */}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21 12.5V6a4 4 0 0 0-4-4H8a6 6 0 0 0-6 6v8a4 4 0 0 0 4 4h9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M8 7v8a4 4 0 0 0 4 4h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* Error Message */}
+      {error && (
+        <div className="px-6 pb-4">
+          <div className="p-3 rounded-xl bg-red-500/10 text-red-400 text-sm flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+              <path d="M15 9l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M9 9l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
+            {error}
+          </div>
+        </div>
+      )}
 
-            <span className="text-sm text-subTextColor">Attach</span>
-            <input
-              id="file-input"
-              type="file"
-              accept="image/*,video/*,audio/*"
-              onChange={onFileChange}
-              className="hidden"
-            />
-          </label>
-
-          {file && (
-            <div className="flex items-center gap-2 px-2 py-1 rounded text-sm bg-background/30 border border-border/10">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 5v14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M5 12h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* Bottom Actions */}
+      <div 
+        className={`px-6 py-4 transition-all ${focused ? "" : ""}`}
+      >
+        <div className="flex items-center justify-between">
+          {/* Media Controls */}
+          <div className="flex items-center gap-2">
+            {/* Attach Button */}
+            <label
+              htmlFor="file-input"
+              className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-background/40 hover:bg-background/60 cursor-pointer transition-all hover:scale-105 transform"
+              title="Attach media"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-subTextColor group-hover:text-textColor transition-colors">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" strokeWidth="1.5"/>
+                <polyline points="7,10 12,15 17,10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span className="text-xs text-textColor max-w-[220px] truncate">{file.name}</span>
-              <button onClick={clearFile} className="text-xs text-subTextColor hover:text-textColor ml-2">Remove</button>
+              <span className="text-sm font-medium text-subTextColor group-hover:text-textColor transition-colors">
+                Media
+              </span>
+              <input
+                id="file-input"
+                type="file"
+                accept="image/*,video/*,audio/*"
+                onChange={onFileChange}
+                className="hidden"
+              />
+            </label>
+
+            {/* Additional Controls */}
+            <button className="group p-2.5 rounded-full hover:bg-background/50 transition-all" title="Add poll">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-subTextColor group-hover:text-textColor transition-colors">
+                <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M9 9h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M9 15h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+
+            <button className="group p-2.5 rounded-full hover:bg-background/50 transition-all" title="Add emoji">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-subTextColor group-hover:text-textColor transition-colors">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <line x1="9" y1="9" x2="9.01" y2="9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <line x1="15" y1="9" x2="15.01" y2="9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+
+          {/* File Info & Actions */}
+          <div className="flex items-center gap-3">
+            {file && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-background/40 rounded-full">
+                <div className="w-2 h-2 rounded-full bg-muzupColor animate-pulse"></div>
+                <span className="text-xs font-medium text-textColor max-w-[120px] truncate">
+                  {file.name}
+                </span>
+                <button 
+                  onClick={clearFile} 
+                  className="text-xs text-subTextColor hover:text-red-400 transition-colors ml-1"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Character count indicator */}
+            {focused && content.length > 200 && (
+              <div className="flex items-center gap-2">
+                <div className="relative w-8 h-8">
+                  <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 32 32">
+                    <circle
+                      cx="16"
+                      cy="16"
+                      r="14"
+                      fill="none"
+                      stroke="var(--background)"
+                      strokeWidth="2"
+                    />
+                    <circle
+                      cx="16"
+                      cy="16"
+                      r="14"
+                      fill="none"
+                      stroke={content.length > 280 ? "#ef4444" : "var(--muzupColor)"}
+                      strokeWidth="2"
+                      strokeDasharray={87.96}
+                      strokeDashoffset={87.96 - (content.length / 280) * 87.96}
+                      className="transition-all duration-300"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className={`text-xs font-bold ${content.length > 280 ? "text-red-400" : "text-subTextColor"}`}>
+                      {280 - content.length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Post Button */}
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || (!content.trim() && !file) || content.length > 280}
+              className={`relative px-6 py-2.5 rounded-full font-semibold transition-all transform ${
+                submitting || (!content.trim() && !file) || content.length > 280
+                  ? "opacity-50 cursor-not-allowed bg-subTextColor/20 text-subTextColor"
+                  : "bg-gradient-to-r from-muzupColor to-green-500 text-white hover:shadow-lg hover:shadow-muzupColor/25 hover:scale-105 active:scale-95"
+              }`}
+              style={{ fontFamily: "var(--font-secondary)" }}
+            >
+              {submitting && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                </div>
+              )}
+              <span className={submitting ? "opacity-0" : "opacity-100"}>
+                {submitting ? "Posting..." : "Post"}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Expanded Options (when focused) */}
+        {focused && (
+          <div className="mt-4 pt-4 animate-fadeIn">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-subTextColor">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  <span className="text-sm text-subTextColor">Post publicly</span>
+                </div>
+
+                <button className="text-sm text-muzupColor hover:text-muzupColor/80 transition-colors font-medium">
+                  Change audience
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs text-subTextColor">
+                <div className="w-1 h-1 rounded-full bg-muzupColor"></div>
+                <span>Everyone can see this post</span>
+              </div>
             </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          {error && <div className="text-destructive text-sm">{error}</div>}
-
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className={`px-4 py-2 rounded-lg font-medium transition-transform transform ${
-              submitting
-                ? "opacity-60 cursor-not-allowed"
-                : "bg-muzupColor text-white hover:scale-105 cursor-pointer"
-            }`}
-            style={{ fontFamily: "var(--font-secondary)" }}
-          >
-            {submitting ? "Posting..." : "Post"}
-          </button>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

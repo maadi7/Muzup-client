@@ -26,7 +26,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
   // Navigation items configuration
   const navigationItems: NavigationItem[] = [
     { id: "home", label: "Home", icon: Home, href: "/home" },
-    { id: "categories", label: "Categories", icon: Grid3X3, href: "/categories" },
+    { id: "profile", label: "Profile", icon: Grid3X3, href:"/profile" },
     { id: "artists", label: "Artists", icon: User, href: "/artists" },
   ];
 

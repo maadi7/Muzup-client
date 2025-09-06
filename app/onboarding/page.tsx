@@ -20,7 +20,7 @@ async function getMeUser() {
 async function Page() {
   const user = await getMeUser();
   if (user && user.isProfileCompleted) {
-    redirect("/home");
+    redirect("Muzup/home");
   }
 
   return <OnboardingForm />;

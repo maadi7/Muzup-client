@@ -1,0 +1,16 @@
+# Comment Mutations
+
+# Add a new comment to a post
+mutation addComment($input: CommentInput!) {
+  addComment(input: $input)
+}
+
+# Delete a comment (only by comment owner)  
+mutation deleteComment($commentId: String!) {
+  deleteComment(commentId: $commentId)
+}
+
+# Reply to an existing comment
+mutation replyToComment($input: CommentInput!) {
+  replyToComment(input: $input)
+}
