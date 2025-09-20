@@ -423,7 +423,7 @@ export type GetPostByIdQuery = { __typename?: 'Query', getPostById: { __typename
 export type MeUserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeUserQuery = { __typename?: 'Query', meUser?: { __typename?: 'User', _id: string, username?: string | null, firstName?: string | null, lastName?: string | null, spotifyId: string, email: string, bio?: string | null, dob?: any | null, type?: UserType | null, isAccountVerified?: boolean | null, isProfileCompleted: boolean, deviceDetails?: string | null, intro: boolean, instagramLink?: string | null, followers?: Array<string> | null, followings?: Array<string> | null, blockedByMe?: Array<string> | null, isPrivate?: boolean | null, topArtists?: Array<{ __typename?: 'Artist', name?: string | null }> | null, topTracks?: Array<{ __typename?: 'Track', name: string }> | null, recentlyPlayed?: Array<{ __typename?: 'RecentlyPlayed', name: string }> | null } | null };
+export type MeUserQuery = { __typename?: 'Query', meUser?: { __typename?: 'User', _id: string, username?: string | null, firstName?: string | null, lastName?: string | null, spotifyId: string, email: string, bio?: string | null, dob?: any | null, type?: UserType | null, isAccountVerified?: boolean | null, isProfileCompleted: boolean, deviceDetails?: string | null, intro: boolean, instagramLink?: string | null, profilePic: string, followers?: Array<string> | null, followings?: Array<string> | null, blockedByMe?: Array<string> | null, isPrivate?: boolean | null, topArtists?: Array<{ __typename?: 'Artist', name?: string | null }> | null, topTracks?: Array<{ __typename?: 'Track', name: string }> | null, recentlyPlayed?: Array<{ __typename?: 'RecentlyPlayed', name: string }> | null } | null };
 
 export type SaveUserTokenMutationVariables = Exact<{
   input: UserToken;
@@ -567,6 +567,7 @@ export const MeUserDocument = gql`
     deviceDetails
     intro
     instagramLink
+    profilePic
     topArtists {
       name
     }

@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { sdk } from "@/utils/graphqlClient";
 import PostCard from "./post-card";
 import PostCardSkeleton from "./post-card-skeleton";
+import { useUserStore } from "@/stores/userStore";
+import { useFeedStore } from "@/stores/feedStore";
 
 type Post = any;
 
@@ -18,17 +20,8 @@ export default function Feed({ onRefetchSignal }: { onRefetchSignal?: number }) 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [removingIds, setRemovingIds] = useState<Record<string, boolean>>({});
 
-
-  const fetchCurrentUser = useCallback(async () => {
-    try {
-      const res = await sdk.meUser();
-      const user = res?.meUser ?? null;
-      setCurrentUserId(user?._id ?? null);
-    } catch (err) {
-      console.warn("failed to fetch current user", err);
-      setCurrentUserId(null);
-    }
-  }, []);
+   const currentUser = useUserStore((state) => state.currentUser);
+   const refetchSignal = useFeedStore((state) => state.refetchSignal);
 
   const fetchPage = useCallback(async (p = 1, replace = false) => {
     try {
@@ -64,18 +57,17 @@ export default function Feed({ onRefetchSignal }: { onRefetchSignal?: number }) 
 
   // initial load + fetch current user
   useEffect(() => {
-    fetchCurrentUser();
     fetchPage(1, true);
     setPage(1);
-  }, [fetchCurrentUser, fetchPage]);
+  }, [ fetchPage]);
 
   // react to parent signal to refetch newest (e.g. after createPost)
   useEffect(() => {
-    if (typeof onRefetchSignal !== "undefined") {
+    if (refetchSignal > 0) {
       fetchPage(1, true);
       setPage(1);
     }
-  }, [onRefetchSignal, fetchPage]);
+  }, [refetchSignal, fetchPage]);
 
   // infinite scroll observer
   useEffect(() => {
@@ -158,7 +150,7 @@ export default function Feed({ onRefetchSignal }: { onRefetchSignal?: number }) 
       >
         <PostCard
           post={p}
-          currentUserId={currentUserId}
+          currentUserId={currentUser?._id || null}
           onDelete={(id: string) => {
             // start removal animation
             setRemovingIds((s) => ({ ...s, [id]: true }));

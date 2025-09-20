@@ -1,21 +1,15 @@
-// components/dashboard/dashboardpage.tsx
-"use client";
+import React from 'react';
+import PostComposer from '@/components/post-composer';
+import Feed from '@/components/feed';
+import UserStoreInitializer from '@/components/user-store-initializer';
+import { getUserServer } from '@/lib/getUserServer';
 
-import React, { useCallback, useState } from "react";
-import PostComposer from "@/components/post-composer";
-import Feed from "@/components/feed";
-
-const DashboardPage: React.FC = () => {
-  // incrementing signal triggers feed refetch (fresh first page)
-  // BUG: Fix Hydration error
-  
-  const [refetchSignal, setRefetchSignal] = useState(0);
-
-  const handlePostCreated = useCallback(() => {
-    setRefetchSignal((s) => s + 1);
-  }, []);
+const DashboardPage: React.FC = async () => {
+   const user = await getUserServer();
 
   return (
+    <>
+     <UserStoreInitializer user={user} />
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondaryBg/30">
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -23,12 +17,12 @@ const DashboardPage: React.FC = () => {
           <div className="lg:col-span-8 space-y-6">
             {/* Composer Section */}
             <div className="sticky z-10">
-              <PostComposer onPostCreated={handlePostCreated} />
+              <PostComposer  user={user}/>
             </div>
             
             {/* Feed Section */}
             <div className="relative">
-              <Feed onRefetchSignal={refetchSignal} />
+              <Feed  />
             </div>
           </div>
 
@@ -120,6 +114,7 @@ const DashboardPage: React.FC = () => {
         </div>
       </div>
     </div>
+      </>
   );
 };
 
