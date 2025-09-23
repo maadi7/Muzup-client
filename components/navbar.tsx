@@ -47,8 +47,8 @@ const Navbar = () => {
           ))}
         </div>
         <div className="hidden md:flex items-center gap-2">
-          <Button text="Sign In" url="ddd" primary py="1.5" />
-          <Button text="Log In" url="ddd" />
+          <Button text="Sign In" primary py="py-1.5" />
+          <Button text="Log In" />
         </div>
 
         {/* Mobile Hamburger Icon */}

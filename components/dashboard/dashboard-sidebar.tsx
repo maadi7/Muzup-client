@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Home, Grid3X3, User, LogOut, Menu, X } from "lucide-react";
+import { Home, Grid3X3, User, LogOut, Bell } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import muzupLogo from "/assets/logo1.png";
+import useSocket from "@/hooks/socket";
+import { useNotificationCount } from "@/store/notification";
 
 // Types for better TypeScript support
 interface NavigationItem {
@@ -16,18 +18,33 @@ interface NavigationItem {
 
 interface SidebarProps {
   className?: string;
+  unreadCount?: number;
 }
 
-const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
+const DashboardSidebar: React.FC<SidebarProps> = ({
+  className = "",
+  unreadCount = 0,
+}) => {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
+  const { notificationCount, setNotificationCount } = useNotificationCount();
+
+  useEffect(() => {
+    setNotificationCount(unreadCount);
+  }, [unreadCount]);
 
   // Navigation items configuration
   const navigationItems: NavigationItem[] = [
-    { id: "home", label: "Home", icon: Home, href: "/home" },
-    { id: "profile", label: "Profile", icon: Grid3X3, href:"/profile" },
-    { id: "artists", label: "Artists", icon: User, href: "/artists" },
+    { id: "home", label: "Home", icon: Home, href: "/Muzup/home" },
+    { id: "profile", label: "Profile", icon: Grid3X3, href: "/Muzup/profile" },
+    { id: "artists", label: "Artists", icon: User, href: "/Muzup/artists" },
+    {
+      id: "notifications",
+      label: "Notifications",
+      icon: Bell,
+      href: "/Muzup/notification",
+    },
   ];
 
   // Check if device is mobile/tablet
@@ -37,20 +54,54 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
     };
 
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
+
+  const { on } = useSocket();
+  useEffect(() => {
+    on("notification", (payload) => {
+      console.log("data", payload);
+      setNotificationCount(notificationCount + 1);
+    });
+  }, [on]);
 
   const handleNavigationClick = (item: NavigationItem) => {
     router.push(item.href);
   };
 
   const handleLogoutClick = () => {
-    console.log('Logging out...');
+    console.log("Logging out...");
   };
 
   const isActiveRoute = (href: string) => {
     return pathname === href;
+  };
+
+  // Helper function to render icon with badge for notifications
+  const renderIconWithBadge = (
+    IconComponent: React.ComponentType<any>,
+    itemId: string,
+    isActive: boolean,
+    size: number = 20
+  ) => {
+    const showBadge = itemId === "notifications" && notificationCount > 0;
+
+    return (
+      <div className="relative flex-shrink-0">
+        <IconComponent
+          size={size}
+          className={`transition-colors ${
+            isActive ? "text-muzupColor" : "text-current"
+          }`}
+        />
+        {showBadge && notificationCount > 0 && (
+          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-medium rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+            {notificationCount > 99 ? "99+" : notificationCount}
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Mobile Bottom Navigation
@@ -61,7 +112,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
           {navigationItems.map((item) => {
             const IconComponent = item.icon;
             const isActive = isActiveRoute(item.href);
-            
+
             return (
               <button
                 key={item.id}
@@ -72,17 +123,12 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
                     : "text-secondary hover:text-textColor"
                 }`}
               >
-                <IconComponent 
-                  size={24} 
-                  className={`transition-colors ${
-                    isActive ? "text-muzupColor" : "text-current"
-                  }`} 
-                />
-                <span className=" mt-1 text-secondary">{item.label}</span>
+                {renderIconWithBadge(IconComponent, item.id, isActive, 24)}
+                <span className="mt-1 text-secondary">{item.label}</span>
               </button>
             );
           })}
-          
+
           {/* Logout button for mobile */}
           <button
             onClick={handleLogoutClick}
@@ -94,13 +140,13 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
         </div>
       </nav>
     );
-  };
+  }
 
   // Desktop Sidebar
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside 
+      <aside
         className={`fixed lg:sticky top-0 left-0 bg-secondaryBg flex flex-col rounded-lg transition-all duration-300 z-40 w-64 ${className} h-[calc(100vh-18px)]`}
         role="navigation"
         aria-label="Main navigation"
@@ -128,7 +174,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
             {navigationItems.map((item) => {
               const IconComponent = item.icon;
               const isActive = isActiveRoute(item.href);
-              
+
               return (
                 <button
                   key={item.id}
@@ -140,12 +186,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className = "" }) => {
                   }`}
                   aria-current={isActive ? "page" : undefined}
                 >
-                  <IconComponent 
-                    size={20} 
-                    className={`transition-colors flex-shrink-0 ${
-                      isActive ? "text-muzupColor" : "text-current"
-                    }`} 
-                  />
+                  {renderIconWithBadge(IconComponent, item.id, isActive)}
                   <span className="transition-opacity duration-200 text-secondary">
                     {item.label}
                   </span>

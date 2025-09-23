@@ -48,7 +48,7 @@ const OnboardingForm = () => {
           id: session?.providerAccountId ?? "",
         });
         if (res.checkById) {
-          router.push("/home");
+          router.push("/Muzup/home");
         }
       } catch (error) {
         console.log(error);
@@ -151,7 +151,7 @@ const OnboardingForm = () => {
         });
         if (res.userSingIn) {
           toast.success("Profile created sucessfuly!");
-          router.push("/home");
+          router.push("/Muzup/home");
         }
       } else {
         toast.error("Something went wrong! please try again later!");

@@ -57,7 +57,7 @@ const HeroSection = () => {
 
   return (
     <div className="relative flex items-center bg-secondaryBg justify-center w-full min-h-screen px-6">
-      {/* <div className="w-full  relative z-20 items-center justify-center text-center max-w-5xl mx-auto">
+      <div className="w-full  relative z-20 items-center justify-center text-center max-w-5xl mx-auto">
         <h1 className="text-textColor text-2xl md:text-5xl font-primary font-bold uppercase">
           Built for People Who
           <span className="text-muzupColor">
@@ -83,7 +83,7 @@ Because music isn’t just sound — it’s a way of finding your people.`}</p>
       <ThreeDMarquee
         className="pointer-events-none absolute inset-0 min-h-screen h-full w-full"
         images={images}
-      /> */}
+      />
     </div>
   );
 };

@@ -1,14 +1,15 @@
 // components/dashboard/dashboardpage.tsx
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PostComposer from "@/components/post-composer";
 import Feed from "@/components/feed";
+import useSocket from "@/hooks/socket";
 
 const DashboardPage: React.FC = () => {
   // incrementing signal triggers feed refetch (fresh first page)
   // BUG: Fix Hydration error
-  
+
   const [refetchSignal, setRefetchSignal] = useState(0);
 
   const handlePostCreated = useCallback(() => {
@@ -16,7 +17,7 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondaryBg/30">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondaryBg/30 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main Feed Column */}
@@ -25,7 +26,7 @@ const DashboardPage: React.FC = () => {
             <div className="sticky z-10">
               <PostComposer onPostCreated={handlePostCreated} />
             </div>
-            
+
             {/* Feed Section */}
             <div className="relative">
               <Feed onRefetchSignal={refetchSignal} />
@@ -36,10 +37,11 @@ const DashboardPage: React.FC = () => {
           <aside className="lg:col-span-4">
             <div className="sticky space-y-4">
               {/* Trending Widget */}
-              <div 
+              <div
                 className="rounded-2xl border backdrop-blur-sm p-6 shadow-lg"
                 style={{
-                  background: "linear-gradient(135deg, var(--secondaryBg) 0%, var(--background) 100%)",
+                  background:
+                    "linear-gradient(135deg, var(--secondaryBg) 0%, var(--background) 100%)",
                   borderColor: "var(--sidebar-border)",
                 }}
               >
@@ -49,15 +51,39 @@ const DashboardPage: React.FC = () => {
                 </h3>
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-background/30 hover:bg-background/50 transition-all cursor-pointer">
+                    <div
+                      key={i}
+                      className="flex items-center justify-between p-3 rounded-xl bg-background/30 hover:bg-background/50 transition-all cursor-pointer"
+                    >
                       <div>
-                        <div className="text-sm font-medium text-textColor">#TrendingTopic{i}</div>
-                        <div className="text-xs text-subTextColor">{20}K posts</div>
+                        <div className="text-sm font-medium text-textColor">
+                          #TrendingTopic{i}
+                        </div>
+                        <div className="text-xs text-subTextColor">
+                          {20}K posts
+                        </div>
                       </div>
                       <div className="w-8 h-8 rounded-lg bg-muzupColor/10 flex items-center justify-center">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-muzupColor">
-                          <path d="M7 17L17 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                          <path d="M7 7h10v10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          className="text-muzupColor"
+                        >
+                          <path
+                            d="M7 17L17 7"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M7 7h10v10"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                         </svg>
                       </div>
                     </div>
@@ -66,10 +92,11 @@ const DashboardPage: React.FC = () => {
               </div>
 
               {/* Suggestions Widget */}
-              <div 
+              <div
                 className="rounded-2xl border backdrop-blur-sm p-6 shadow-lg"
                 style={{
-                  background: "linear-gradient(135deg, var(--secondaryBg) 0%, var(--background) 100%)",
+                  background:
+                    "linear-gradient(135deg, var(--secondaryBg) 0%, var(--background) 100%)",
                   borderColor: "var(--sidebar-border)",
                 }}
               >
@@ -79,13 +106,20 @@ const DashboardPage: React.FC = () => {
                 </h3>
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-background/30 transition-all">
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 p-2 rounded-xl hover:bg-background/30 transition-all"
+                    >
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-muzupColor to-blue-500 flex items-center justify-center text-white font-semibold text-sm">
                         U{i}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-textColor truncate">User {i}</div>
-                        <div className="text-xs text-subTextColor">@user{i}</div>
+                        <div className="text-sm font-medium text-textColor truncate">
+                          User {i}
+                        </div>
+                        <div className="text-xs text-subTextColor">
+                          @user{i}
+                        </div>
                       </div>
                       <button className="px-3 py-1.5 bg-muzupColor text-white text-xs font-medium rounded-lg hover:bg-muzupColor/90 transition-colors">
                         Follow
@@ -96,14 +130,17 @@ const DashboardPage: React.FC = () => {
               </div>
 
               {/* Quick Stats */}
-              <div 
+              <div
                 className="rounded-2xl border backdrop-blur-sm p-6 shadow-lg"
                 style={{
-                  background: "linear-gradient(135deg, var(--secondaryBg) 0%, var(--background) 100%)",
+                  background:
+                    "linear-gradient(135deg, var(--secondaryBg) 0%, var(--background) 100%)",
                   borderColor: "var(--sidebar-border)",
                 }}
               >
-                <h3 className="text-lg font-semibold text-textColor mb-4">Your Activity</h3>
+                <h3 className="text-lg font-semibold text-textColor mb-4">
+                  Your Activity
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-3 rounded-xl bg-background/30">
                     <div className="text-xl font-bold text-muzupColor">24</div>

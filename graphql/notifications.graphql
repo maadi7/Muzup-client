@@ -1,0 +1,32 @@
+query getUnreadNotifications {
+  getUnreadNotifications
+}
+
+query getAllNotifications($page: Int, $limit: Int) {
+  getAllNotifications(page: $page, limit: $limit) {
+    notifications {
+      sender {
+        _id
+        username
+        profilePic
+      }
+      type
+      text
+      isRead
+      isArchived
+      entityType
+      metadata
+      _id
+      createdAt
+      receiver {
+        _id
+      }
+      updatedAt
+    }
+    hasMore
+  }
+}
+
+mutation markAllRead {
+  markAllRead
+}

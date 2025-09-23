@@ -51,6 +51,7 @@ query getUserProfileInfo($id: String!, $page: Float!, $limit: Float!) {
     profilePic
     followersCount
     followingsCount
+    isPrivate
     posts {
       posts {
         _id
@@ -59,6 +60,7 @@ query getUserProfileInfo($id: String!, $page: Float!, $limit: Float!) {
         createdAt
         reactionsCount
         commentsCount
+        caption
       }
       totalCount
       page
@@ -67,4 +69,16 @@ query getUserProfileInfo($id: String!, $page: Float!, $limit: Float!) {
   }
 }
 
+query fetchFriendStatus($id: String!) {
+  fetchFriendStatus(id: $id)
+}
 
+mutation sendRequest($id: String!) {
+  sendRequest(id: $id)
+}
+mutation acceptRequest($id: String!) {
+  acceptRequest(id: $id)
+}
+mutation deleteRequest($id: String!) {
+  deleteRequest(id: $id)
+}

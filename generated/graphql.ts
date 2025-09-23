@@ -16,6 +16,7 @@ export type Scalars = {
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
   DateTimeISO: { input: any; output: any; }
+  JSON: { input: any; output: any; }
 };
 
 export type Album = {
@@ -37,12 +38,34 @@ export type Artist = {
   type?: Maybe<Scalars['String']['output']>;
 };
 
+export type Comment = {
+  __typename?: 'Comment';
+  _id: Scalars['ID']['output'];
+  content: Scalars['String']['output'];
+  createdAt: Scalars['DateTimeISO']['output'];
+  parentId?: Maybe<Comment>;
+  postId: Post;
+  replyToUserId?: Maybe<User>;
+  taggedUserIds?: Maybe<Array<User>>;
+  updatedAt: Scalars['DateTimeISO']['output'];
+  userId: User;
+};
+
 export type CommentInput = {
   content: Scalars['String']['input'];
   parentId?: InputMaybe<Scalars['ID']['input']>;
   postId: Scalars['ID']['input'];
   replyToUserId?: InputMaybe<Scalars['ID']['input']>;
   taggedUserIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type Conversation = {
+  __typename?: 'Conversation';
+  _id: Scalars['ID']['output'];
+  createdAt: Scalars['DateTimeISO']['output'];
+  lastMessage?: Maybe<Message>;
+  participants: Array<User>;
+  updatedAt: Scalars['DateTimeISO']['output'];
 };
 
 export type FriendReqeust = {
@@ -55,20 +78,42 @@ export type FriendReqeust = {
   updatedAt: Scalars['DateTimeISO']['output'];
 };
 
+export type Message = {
+  __typename?: 'Message';
+  _id: Scalars['ID']['output'];
+  conversation: Conversation;
+  createdAt: Scalars['DateTimeISO']['output'];
+  sender: User;
+  status: MessageStatusEnum;
+  text: Scalars['String']['output'];
+};
+
+/** Status of a chat message for each participant */
+export enum MessageStatusEnum {
+  Delivered = 'DELIVERED',
+  Seen = 'SEEN',
+  Sent = 'SENT'
+}
+
 export type Mutation = {
   __typename?: 'Mutation';
   acceptRequest: Scalars['Boolean']['output'];
   addComment: Scalars['Boolean']['output'];
   addReaction: Scalars['Boolean']['output'];
   blockUser: Scalars['Boolean']['output'];
+  createChat: Scalars['Boolean']['output'];
   createPost: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
   deletePost: Scalars['Boolean']['output'];
+  deleteRequest: Scalars['Boolean']['output'];
   editProfile: Scalars['Boolean']['output'];
+  markAllRead: Scalars['Boolean']['output'];
   removeReaction: Scalars['Boolean']['output'];
   replyToComment: Scalars['Boolean']['output'];
   saveUserTokens: Scalars['Boolean']['output'];
+  sendMessage: Scalars['Boolean']['output'];
   sendRequest: Scalars['Boolean']['output'];
+  updateMessageStatus: Scalars['Boolean']['output'];
   userSingIn: Scalars['Boolean']['output'];
 };
 
@@ -94,6 +139,11 @@ export type MutationBlockUserArgs = {
 };
 
 
+export type MutationCreateChatArgs = {
+  id: Scalars['String']['input'];
+};
+
+
 export type MutationCreatePostArgs = {
   input: PostInput;
 };
@@ -106,6 +156,11 @@ export type MutationDeleteCommentArgs = {
 
 export type MutationDeletePostArgs = {
   postId: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteRequestArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -130,13 +185,67 @@ export type MutationSaveUserTokensArgs = {
 };
 
 
+export type MutationSendMessageArgs = {
+  recieverId: Scalars['String']['input'];
+  text: Scalars['String']['input'];
+};
+
+
 export type MutationSendRequestArgs = {
   id: Scalars['String']['input'];
 };
 
 
+export type MutationUpdateMessageStatusArgs = {
+  conversationId: Scalars['String']['input'];
+  messageId: Scalars['String']['input'];
+  newState: MessageStatusEnum;
+};
+
+
 export type MutationUserSingInArgs = {
   input: UserSignInInput;
+};
+
+export type Notification = {
+  __typename?: 'Notification';
+  _id: Scalars['ID']['output'];
+  createdAt: Scalars['DateTimeISO']['output'];
+  dedupeKey?: Maybe<Scalars['String']['output']>;
+  entityId?: Maybe<Scalars['String']['output']>;
+  entityType: NotificationEntityType;
+  isArchived: Scalars['Boolean']['output'];
+  isRead: Scalars['Boolean']['output'];
+  metadata?: Maybe<Scalars['JSON']['output']>;
+  readAt?: Maybe<Scalars['DateTimeISO']['output']>;
+  receiver: User;
+  sender: User;
+  text?: Maybe<Scalars['String']['output']>;
+  type: NotificationType;
+  updatedAt: Scalars['DateTimeISO']['output'];
+};
+
+/** Entity referenced by the notification (post, comment, message, user). */
+export enum NotificationEntityType {
+  Comment = 'COMMENT',
+  Message = 'MESSAGE',
+  Post = 'POST',
+  User = 'USER'
+}
+
+/** Type of notification event (like, comment, reply, message, follow, etc.) */
+export enum NotificationType {
+  CommentReply = 'COMMENT_REPLY',
+  Follow = 'FOLLOW',
+  Message = 'MESSAGE',
+  PostComment = 'POST_COMMENT',
+  PostLike = 'POST_LIKE'
+}
+
+export type PaginatedNotifications = {
+  __typename?: 'PaginatedNotifications';
+  hasMore: Scalars['Boolean']['output'];
+  notifications: Array<Notification>;
 };
 
 export type PaginatedUserPosts = {
@@ -185,8 +294,16 @@ export enum PostType {
 export type Query = {
   __typename?: 'Query';
   checkById: Scalars['Boolean']['output'];
+  fetchFriendStatus?: Maybe<RequestStatus>;
+  getAllChat: Array<Conversation>;
+  getAllNotifications: PaginatedNotifications;
+  getChat: Conversation;
+  getComments: Array<Comment>;
   getPostById: Post;
+  getReplies: RepliesResponse;
+  getSidebarChats: Array<SidebarChat>;
   getTimelinePosts: Array<Post>;
+  getUnreadNotifications: Scalars['Float']['output'];
   getUserProfileInfo: UserProfileInfo;
   meUser?: Maybe<User>;
   searchUsers: Array<User>;
@@ -198,8 +315,36 @@ export type QueryCheckByIdArgs = {
 };
 
 
+export type QueryFetchFriendStatusArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryGetAllNotificationsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryGetChatArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryGetCommentsArgs = {
+  page: Scalars['Float']['input'];
+  postId: Scalars['String']['input'];
+};
+
+
 export type QueryGetPostByIdArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type QueryGetRepliesArgs = {
+  page: Scalars['Float']['input'];
+  parentId: Scalars['String']['input'];
 };
 
 
@@ -234,12 +379,28 @@ export type RecentlyPlayed = {
   type?: Maybe<Scalars['String']['output']>;
 };
 
+export type RepliesResponse = {
+  __typename?: 'RepliesResponse';
+  comments: Array<Comment>;
+  hasMore: Scalars['Boolean']['output'];
+};
+
 /** Enum For Request status of followers */
 export enum RequestStatus {
   Accepted = 'Accepted',
   Pending = 'Pending',
   Rejected = 'Rejected'
 }
+
+export type SidebarChat = {
+  __typename?: 'SidebarChat';
+  conversationId: Scalars['String']['output'];
+  lastMessage: Scalars['String']['output'];
+  lastMessageTime: Scalars['DateTimeISO']['output'];
+  profilePic: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+  username: Scalars['String']['output'];
+};
 
 export type Track = {
   __typename?: 'Track';
@@ -283,7 +444,7 @@ export type User = {
   lastLoggedIn?: Maybe<Scalars['DateTimeISO']['output']>;
   lastLoggedOut?: Maybe<Scalars['DateTimeISO']['output']>;
   lastName?: Maybe<Scalars['String']['output']>;
-  profilePic: Scalars['String']['output'];
+  profilePic?: Maybe<Scalars['String']['output']>;
   recentlyPlayed?: Maybe<Array<RecentlyPlayed>>;
   relistDate?: Maybe<Array<Scalars['DateTimeISO']['output']>>;
   requestedTo?: Maybe<FriendReqeust>;
@@ -300,6 +461,7 @@ export type User = {
 export type UserPostInfo = {
   __typename?: 'UserPostInfo';
   _id: Scalars['ID']['output'];
+  caption?: Maybe<Scalars['String']['output']>;
   commentsCount: Scalars['Float']['output'];
   createdAt: Scalars['DateTimeISO']['output'];
   postUrl?: Maybe<Scalars['String']['output']>;
@@ -313,6 +475,7 @@ export type UserProfileInfo = {
   firstName: Scalars['String']['output'];
   followersCount: Scalars['Float']['output'];
   followingsCount: Scalars['Float']['output'];
+  isPrivate: Scalars['Boolean']['output'];
   lastName: Scalars['String']['output'];
   posts: PaginatedUserPosts;
   profilePic?: Maybe<Scalars['String']['output']>;
@@ -375,6 +538,24 @@ export type ReplyToCommentMutationVariables = Exact<{
 
 export type ReplyToCommentMutation = { __typename?: 'Mutation', replyToComment: boolean };
 
+export type GetUnreadNotificationsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetUnreadNotificationsQuery = { __typename?: 'Query', getUnreadNotifications: number };
+
+export type GetAllNotificationsQueryVariables = Exact<{
+  page?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetAllNotificationsQuery = { __typename?: 'Query', getAllNotifications: { __typename?: 'PaginatedNotifications', hasMore: boolean, notifications: Array<{ __typename?: 'Notification', type: NotificationType, text?: string | null, isRead: boolean, isArchived: boolean, entityType: NotificationEntityType, metadata?: any | null, _id: string, createdAt: any, updatedAt: any, sender: { __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null }, receiver: { __typename?: 'User', _id: string } }> } };
+
+export type MarkAllReadMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MarkAllReadMutation = { __typename?: 'Mutation', markAllRead: boolean };
+
 export type CreatePostMutationVariables = Exact<{
   input: PostInput;
 }>;
@@ -411,14 +592,14 @@ export type GetTimelinePostsQueryVariables = Exact<{
 }>;
 
 
-export type GetTimelinePostsQuery = { __typename?: 'Query', getTimelinePosts: Array<{ __typename?: 'Post', _id: string, caption?: string | null, postType?: PostType | null, postUrl?: string | null, waveUrl?: string | null, createdAt: any, updatedAt: any, user: { __typename?: 'User', _id: string, username?: string | null, profilePic: string }, reactions?: Array<{ __typename?: 'PostReaction', emoji: string, users: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> | null, visibleTo: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> };
+export type GetTimelinePostsQuery = { __typename?: 'Query', getTimelinePosts: Array<{ __typename?: 'Post', _id: string, caption?: string | null, postType?: PostType | null, postUrl?: string | null, waveUrl?: string | null, createdAt: any, updatedAt: any, user: { __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null }, reactions?: Array<{ __typename?: 'PostReaction', emoji: string, users: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> | null, visibleTo: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> };
 
 export type GetPostByIdQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type GetPostByIdQuery = { __typename?: 'Query', getPostById: { __typename?: 'Post', _id: string, caption?: string | null, postType?: PostType | null, postUrl?: string | null, waveUrl?: string | null, createdAt: any, updatedAt: any, user: { __typename?: 'User', _id: string, username?: string | null, profilePic: string, isPrivate?: boolean | null }, reactions?: Array<{ __typename?: 'PostReaction', emoji: string, users: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> | null, visibleTo: Array<{ __typename?: 'User', _id: string, username?: string | null }> } };
+export type GetPostByIdQuery = { __typename?: 'Query', getPostById: { __typename?: 'Post', _id: string, caption?: string | null, postType?: PostType | null, postUrl?: string | null, waveUrl?: string | null, createdAt: any, updatedAt: any, user: { __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null, isPrivate?: boolean | null }, reactions?: Array<{ __typename?: 'PostReaction', emoji: string, users: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> | null, visibleTo: Array<{ __typename?: 'User', _id: string, username?: string | null }> } };
 
 export type MeUserQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -453,7 +634,35 @@ export type GetUserProfileInfoQueryVariables = Exact<{
 }>;
 
 
-export type GetUserProfileInfoQuery = { __typename?: 'Query', getUserProfileInfo: { __typename?: 'UserProfileInfo', username: string, firstName: string, lastName: string, bio?: string | null, profilePic?: string | null, followersCount: number, followingsCount: number, posts: { __typename?: 'PaginatedUserPosts', totalCount: number, page: number, totalPages: number, posts: Array<{ __typename?: 'UserPostInfo', _id: string, postUrl?: string | null, waveUrl?: string | null, createdAt: any, reactionsCount: number, commentsCount: number }> } } };
+export type GetUserProfileInfoQuery = { __typename?: 'Query', getUserProfileInfo: { __typename?: 'UserProfileInfo', username: string, firstName: string, lastName: string, bio?: string | null, profilePic?: string | null, followersCount: number, followingsCount: number, isPrivate: boolean, posts: { __typename?: 'PaginatedUserPosts', totalCount: number, page: number, totalPages: number, posts: Array<{ __typename?: 'UserPostInfo', _id: string, postUrl?: string | null, waveUrl?: string | null, createdAt: any, reactionsCount: number, commentsCount: number, caption?: string | null }> } } };
+
+export type FetchFriendStatusQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type FetchFriendStatusQuery = { __typename?: 'Query', fetchFriendStatus?: RequestStatus | null };
+
+export type SendRequestMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type SendRequestMutation = { __typename?: 'Mutation', sendRequest: boolean };
+
+export type AcceptRequestMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type AcceptRequestMutation = { __typename?: 'Mutation', acceptRequest: boolean };
+
+export type DeleteRequestMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type DeleteRequestMutation = { __typename?: 'Mutation', deleteRequest: boolean };
 
 
 export const AddCommentDocument = gql`
@@ -469,6 +678,42 @@ export const DeleteCommentDocument = gql`
 export const ReplyToCommentDocument = gql`
     mutation replyToComment($input: CommentInput!) {
   replyToComment(input: $input)
+}
+    `;
+export const GetUnreadNotificationsDocument = gql`
+    query getUnreadNotifications {
+  getUnreadNotifications
+}
+    `;
+export const GetAllNotificationsDocument = gql`
+    query getAllNotifications($page: Int, $limit: Int) {
+  getAllNotifications(page: $page, limit: $limit) {
+    notifications {
+      sender {
+        _id
+        username
+        profilePic
+      }
+      type
+      text
+      isRead
+      isArchived
+      entityType
+      metadata
+      _id
+      createdAt
+      receiver {
+        _id
+      }
+      updatedAt
+    }
+    hasMore
+  }
+}
+    `;
+export const MarkAllReadDocument = gql`
+    mutation markAllRead {
+  markAllRead
 }
     `;
 export const CreatePostDocument = gql`
@@ -608,6 +853,7 @@ export const GetUserProfileInfoDocument = gql`
     profilePic
     followersCount
     followingsCount
+    isPrivate
     posts {
       posts {
         _id
@@ -616,12 +862,33 @@ export const GetUserProfileInfoDocument = gql`
         createdAt
         reactionsCount
         commentsCount
+        caption
       }
       totalCount
       page
       totalPages
     }
   }
+}
+    `;
+export const FetchFriendStatusDocument = gql`
+    query fetchFriendStatus($id: String!) {
+  fetchFriendStatus(id: $id)
+}
+    `;
+export const SendRequestDocument = gql`
+    mutation sendRequest($id: String!) {
+  sendRequest(id: $id)
+}
+    `;
+export const AcceptRequestDocument = gql`
+    mutation acceptRequest($id: String!) {
+  acceptRequest(id: $id)
+}
+    `;
+export const DeleteRequestDocument = gql`
+    mutation deleteRequest($id: String!) {
+  deleteRequest(id: $id)
 }
     `;
 
@@ -640,6 +907,15 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     replyToComment(variables: ReplyToCommentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReplyToCommentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<ReplyToCommentMutation>({ document: ReplyToCommentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'replyToComment', 'mutation', variables);
+    },
+    getUnreadNotifications(variables?: GetUnreadNotificationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetUnreadNotificationsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetUnreadNotificationsQuery>({ document: GetUnreadNotificationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getUnreadNotifications', 'query', variables);
+    },
+    getAllNotifications(variables?: GetAllNotificationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetAllNotificationsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetAllNotificationsQuery>({ document: GetAllNotificationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getAllNotifications', 'query', variables);
+    },
+    markAllRead(variables?: MarkAllReadMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MarkAllReadMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<MarkAllReadMutation>({ document: MarkAllReadDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'markAllRead', 'mutation', variables);
     },
     createPost(variables: CreatePostMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreatePostMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreatePostMutation>({ document: CreatePostDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'createPost', 'mutation', variables);
@@ -673,6 +949,18 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     getUserProfileInfo(variables: GetUserProfileInfoQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetUserProfileInfoQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetUserProfileInfoQuery>({ document: GetUserProfileInfoDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getUserProfileInfo', 'query', variables);
+    },
+    fetchFriendStatus(variables: FetchFriendStatusQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<FetchFriendStatusQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<FetchFriendStatusQuery>({ document: FetchFriendStatusDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'fetchFriendStatus', 'query', variables);
+    },
+    sendRequest(variables: SendRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<SendRequestMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<SendRequestMutation>({ document: SendRequestDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'sendRequest', 'mutation', variables);
+    },
+    acceptRequest(variables: AcceptRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<AcceptRequestMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AcceptRequestMutation>({ document: AcceptRequestDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'acceptRequest', 'mutation', variables);
+    },
+    deleteRequest(variables: DeleteRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<DeleteRequestMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestMutation>({ document: DeleteRequestDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'deleteRequest', 'mutation', variables);
     }
   };
 }

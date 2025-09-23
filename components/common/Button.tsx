@@ -40,41 +40,33 @@ const Button: React.FC<ButtonProps> = ({
   const iconHeight = h ? `${parseInt(h) * 0.25}rem` : "1.25rem"; // default h-5
 
   return (
-    <div
-      className={`inline-block text-center cursor-pointer text-secondary ${
-        wfull ? "w-full" : ""
-      } `}
+    <button
+      onClick={onClick}
+      type="button"
+      className={`
+    ${
+      primary
+        ? "bg-textColor/90 text-black hover:bg-white hover:text-black"
+        : "text-subTextColor hover:text-textColor"
+    }
+    ${px ? px : "px-3"} ${py ? py : "py-2"}
+    shadow-sm rounded-lg text-sm font-semibold duration-200 group
+  `}
     >
-      <div
-        onClick={onClick}
-        className={`
-          ${
-            primary
-              ? "bg-textColor/90 text-black hover:bg-white hover:text-black"
-              : "text-subTextColor hover:text-textColor"
-          }
-          ${px ? px : "px-3"} block ${py ? py : "py-2"}
-          shadow-sm rounded-lg text-sm font-semibold px-3 block py-1.5 duration-200 group
-        `}
-      >
-        <p className="flex items-center justify-center gap-2">
-          {Icon && (
-            <Icon
-              style={{
-                width: iconWidth,
-                height: iconHeight,
-              }}
-              className={`${IconLeft ? "order-1" : "order-2"} ${
-                primary
-                  ? "group-hover:text-black"
-                  : "text-subTextColor group-hover:text-textColor"
-              } transition-colors duration-200 text-${IconColor}`}
-            />
-          )}
-          <span className={IconLeft ? "order-2" : "order-1"}>{text}</span>
-        </p>
-      </div>
-    </div>
+      <span className="flex items-center justify-center gap-2">
+        {Icon && (
+          <Icon
+            style={{ width: iconWidth, height: iconHeight }}
+            className={`${IconLeft ? "order-1" : "order-2"} ${
+              primary
+                ? "group-hover:text-black"
+                : "text-subTextColor group-hover:text-textColor"
+            } transition-colors duration-200`}
+          />
+        )}
+        <span className={IconLeft ? "order-2" : "order-1"}>{text}</span>
+      </span>
+    </button>
   );
 };
 
