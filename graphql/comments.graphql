@@ -14,3 +14,64 @@ mutation deleteComment($commentId: String!) {
 mutation replyToComment($input: CommentInput!) {
   replyToComment(input: $input)
 }
+
+# Get top-level comments for a post with pagination
+query getComments($postId: String!, $page: Float!) {
+  getComments(postId: $postId, page: $page) {
+    _id
+    postId {
+      _id
+    }
+    parentId {
+      _id
+      content
+    }
+    content
+    taggedUserIds {
+      _id
+      username
+      profilePic
+    }
+    createdAt
+    updatedAt
+    userId {
+      _id
+      username
+      profilePic
+    }
+  }
+}
+
+query getReplies($parentId: String!, $page: Float!) {
+  getReplies(parentId: $parentId, page: $page) {
+    comments {
+      _id
+      postId {
+        _id
+      }
+      parentId {
+        _id
+        content
+      }
+      content
+      taggedUserIds {
+        _id
+        username
+        profilePic
+      }
+      createdAt
+      updatedAt
+      userId {
+        _id
+        username
+        profilePic
+      }
+      replyToUserId {
+        _id
+        username
+      }
+    }
+    hasMore
+  }
+}
+

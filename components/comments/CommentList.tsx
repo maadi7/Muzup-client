@@ -36,8 +36,8 @@ export default function CommentList({
     async (p = 1, replace = false) => {
       try {
         if (p === 1) setLoading(true);
-        const res = await sdk.getCommentsByPost({ postId, page: p, limit: LIMIT } as any);
-        const data = res?.getCommentsByPost ?? res;
+        const res = await sdk.getComments({ postId, page: p, limit: LIMIT } as any);
+        const data = res?.getComments?? res;
         const arr = Array.isArray(data) ? data : Array.isArray((data as any).items) ? (data as any).items : [];
         if (arr.length === 0 && p === 1) {
           setComments([]);

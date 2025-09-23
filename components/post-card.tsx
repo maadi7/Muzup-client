@@ -3,6 +3,7 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import { sdk } from "@/utils/graphqlClient";
+import fromNow from "moment-from-now";
 
 type User = {
   _id: string;
@@ -101,14 +102,14 @@ export default function PostCard({
 
     try {
       // Use original post.reactions to determine original state
-      const originallyReacted = (post.reactions ?? []).some((r) =>
-        r.emoji === emoji && r.users?.some((u) => u._id?.toString() === currentUserId?.toString())
+      const originallyReacted = updated.some(r =>
+       r.emoji === emoji && r.users?.some(u => u._id?.toString() === currentUserId?.toString())
       );
 
       if (originallyReacted) {
-        await sdk.removeReaction({ postId: post._id, emoji } as any);
-      } else {
         await sdk.addReaction({ postId: post._id, emoji } as any);
+      } else {
+        await sdk.removeReaction({ postId: post._id, emoji } as any);
       }
     } catch (err) {
       console.error("reaction mutation failed, reverting", err);
@@ -142,7 +143,7 @@ export default function PostCard({
 
   const quickEmojis = ["👍", "❤️", "🔥", "😂", "🎉", "🎵"];
   const date = post.createdAt ? new Date(post.createdAt) : null;
-  const timeAgo = date ? getTimeAgo(date) : "";
+  const timeAgo = date ? fromNow(date) : "";
 
   return (
     <article
@@ -388,20 +389,4 @@ export default function PostCard({
       </div>
     </article>
   );
-}
-
-// Helper function for time formatting
-function getTimeAgo(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffMins < 1) return "now";
-  if (diffMins < 60) return `${diffMins}m`;
-  if (diffHours < 24) return `${diffHours}h`;
-  if (diffDays < 7) return `${diffDays}d`;
-
-  return date.toLocaleDateString();
 }

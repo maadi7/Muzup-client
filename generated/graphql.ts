@@ -16,6 +16,7 @@ export type Scalars = {
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
   DateTimeISO: { input: any; output: any; }
+  JSON: { input: any; output: any; }
 };
 
 export type Album = {
@@ -37,12 +38,34 @@ export type Artist = {
   type?: Maybe<Scalars['String']['output']>;
 };
 
+export type Comment = {
+  __typename?: 'Comment';
+  _id: Scalars['ID']['output'];
+  content: Scalars['String']['output'];
+  createdAt: Scalars['DateTimeISO']['output'];
+  parentId?: Maybe<Comment>;
+  postId: Post;
+  replyToUserId?: Maybe<User>;
+  taggedUserIds?: Maybe<Array<User>>;
+  updatedAt: Scalars['DateTimeISO']['output'];
+  userId: User;
+};
+
 export type CommentInput = {
   content: Scalars['String']['input'];
   parentId?: InputMaybe<Scalars['ID']['input']>;
   postId: Scalars['ID']['input'];
   replyToUserId?: InputMaybe<Scalars['ID']['input']>;
   taggedUserIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type Conversation = {
+  __typename?: 'Conversation';
+  _id: Scalars['ID']['output'];
+  createdAt: Scalars['DateTimeISO']['output'];
+  lastMessage?: Maybe<Message>;
+  participants: Array<User>;
+  updatedAt: Scalars['DateTimeISO']['output'];
 };
 
 export type FriendReqeust = {
@@ -55,20 +78,41 @@ export type FriendReqeust = {
   updatedAt: Scalars['DateTimeISO']['output'];
 };
 
+export type Message = {
+  __typename?: 'Message';
+  _id: Scalars['ID']['output'];
+  conversation: Conversation;
+  createdAt: Scalars['DateTimeISO']['output'];
+  sender: User;
+  status: MessageStatusEnum;
+  text: Scalars['String']['output'];
+};
+
+/** Status of a chat message for each participant */
+export enum MessageStatusEnum {
+  Delivered = 'DELIVERED',
+  Seen = 'SEEN',
+  Sent = 'SENT'
+}
+
 export type Mutation = {
   __typename?: 'Mutation';
   acceptRequest: Scalars['Boolean']['output'];
   addComment: Scalars['Boolean']['output'];
   addReaction: Scalars['Boolean']['output'];
   blockUser: Scalars['Boolean']['output'];
+  createChat: Scalars['Boolean']['output'];
   createPost: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
   deletePost: Scalars['Boolean']['output'];
+  deleteRequest: Scalars['Boolean']['output'];
   editProfile: Scalars['Boolean']['output'];
   removeReaction: Scalars['Boolean']['output'];
   replyToComment: Scalars['Boolean']['output'];
   saveUserTokens: Scalars['Boolean']['output'];
+  sendMessage: Scalars['Boolean']['output'];
   sendRequest: Scalars['Boolean']['output'];
+  updateMessageStatus: Scalars['Boolean']['output'];
   userSingIn: Scalars['Boolean']['output'];
 };
 
@@ -94,6 +138,11 @@ export type MutationBlockUserArgs = {
 };
 
 
+export type MutationCreateChatArgs = {
+  id: Scalars['String']['input'];
+};
+
+
 export type MutationCreatePostArgs = {
   input: PostInput;
 };
@@ -106,6 +155,11 @@ export type MutationDeleteCommentArgs = {
 
 export type MutationDeletePostArgs = {
   postId: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteRequestArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -130,13 +184,67 @@ export type MutationSaveUserTokensArgs = {
 };
 
 
+export type MutationSendMessageArgs = {
+  recieverId: Scalars['String']['input'];
+  text: Scalars['String']['input'];
+};
+
+
 export type MutationSendRequestArgs = {
   id: Scalars['String']['input'];
 };
 
 
+export type MutationUpdateMessageStatusArgs = {
+  conversationId: Scalars['String']['input'];
+  messageId: Scalars['String']['input'];
+  newState: MessageStatusEnum;
+};
+
+
 export type MutationUserSingInArgs = {
   input: UserSignInInput;
+};
+
+export type Notification = {
+  __typename?: 'Notification';
+  _id: Scalars['ID']['output'];
+  createdAt: Scalars['DateTimeISO']['output'];
+  dedupeKey?: Maybe<Scalars['String']['output']>;
+  entityId?: Maybe<Scalars['String']['output']>;
+  entityType: NotificationEntityType;
+  isArchived: Scalars['Boolean']['output'];
+  isRead: Scalars['Boolean']['output'];
+  metadata?: Maybe<Scalars['JSON']['output']>;
+  readAt?: Maybe<Scalars['DateTimeISO']['output']>;
+  receiver: User;
+  sender: User;
+  text?: Maybe<Scalars['String']['output']>;
+  type: NotificationType;
+  updatedAt: Scalars['DateTimeISO']['output'];
+};
+
+/** Entity referenced by the notification (post, comment, message, user). */
+export enum NotificationEntityType {
+  Comment = 'COMMENT',
+  Message = 'MESSAGE',
+  Post = 'POST',
+  User = 'USER'
+}
+
+/** Type of notification event (like, comment, reply, message, follow, etc.) */
+export enum NotificationType {
+  CommentReply = 'COMMENT_REPLY',
+  Follow = 'FOLLOW',
+  Message = 'MESSAGE',
+  PostComment = 'POST_COMMENT',
+  PostLike = 'POST_LIKE'
+}
+
+export type PaginatedNotifications = {
+  __typename?: 'PaginatedNotifications';
+  hasMore: Scalars['Boolean']['output'];
+  notifications: Array<Notification>;
 };
 
 export type PaginatedUserPosts = {
@@ -185,8 +293,16 @@ export enum PostType {
 export type Query = {
   __typename?: 'Query';
   checkById: Scalars['Boolean']['output'];
+  fetchFriendStatus?: Maybe<RequestStatus>;
+  getAllChat: Array<Conversation>;
+  getAllNotifications: PaginatedNotifications;
+  getChat: Conversation;
+  getComments: Array<Comment>;
   getPostById: Post;
+  getReplies: RepliesResponse;
+  getSidebarChats: Array<SidebarChat>;
   getTimelinePosts: Array<Post>;
+  getUnreadNotifications: Array<Notification>;
   getUserProfileInfo: UserProfileInfo;
   meUser?: Maybe<User>;
   searchUsers: Array<User>;
@@ -198,8 +314,36 @@ export type QueryCheckByIdArgs = {
 };
 
 
+export type QueryFetchFriendStatusArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryGetAllNotificationsArgs = {
+  limit?: Scalars['Int']['input'];
+  page?: Scalars['Int']['input'];
+};
+
+
+export type QueryGetChatArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryGetCommentsArgs = {
+  page: Scalars['Float']['input'];
+  postId: Scalars['String']['input'];
+};
+
+
 export type QueryGetPostByIdArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type QueryGetRepliesArgs = {
+  page: Scalars['Float']['input'];
+  parentId: Scalars['String']['input'];
 };
 
 
@@ -234,12 +378,28 @@ export type RecentlyPlayed = {
   type?: Maybe<Scalars['String']['output']>;
 };
 
+export type RepliesResponse = {
+  __typename?: 'RepliesResponse';
+  comments: Array<Comment>;
+  hasMore: Scalars['Boolean']['output'];
+};
+
 /** Enum For Request status of followers */
 export enum RequestStatus {
   Accepted = 'Accepted',
   Pending = 'Pending',
   Rejected = 'Rejected'
 }
+
+export type SidebarChat = {
+  __typename?: 'SidebarChat';
+  conversationId: Scalars['String']['output'];
+  lastMessage: Scalars['String']['output'];
+  lastMessageTime: Scalars['DateTimeISO']['output'];
+  profilePic: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+  username: Scalars['String']['output'];
+};
 
 export type Track = {
   __typename?: 'Track';
@@ -283,7 +443,7 @@ export type User = {
   lastLoggedIn?: Maybe<Scalars['DateTimeISO']['output']>;
   lastLoggedOut?: Maybe<Scalars['DateTimeISO']['output']>;
   lastName?: Maybe<Scalars['String']['output']>;
-  profilePic: Scalars['String']['output'];
+  profilePic?: Maybe<Scalars['String']['output']>;
   recentlyPlayed?: Maybe<Array<RecentlyPlayed>>;
   relistDate?: Maybe<Array<Scalars['DateTimeISO']['output']>>;
   requestedTo?: Maybe<FriendReqeust>;
@@ -300,6 +460,7 @@ export type User = {
 export type UserPostInfo = {
   __typename?: 'UserPostInfo';
   _id: Scalars['ID']['output'];
+  caption?: Maybe<Scalars['String']['output']>;
   commentsCount: Scalars['Float']['output'];
   createdAt: Scalars['DateTimeISO']['output'];
   postUrl?: Maybe<Scalars['String']['output']>;
@@ -313,6 +474,7 @@ export type UserProfileInfo = {
   firstName: Scalars['String']['output'];
   followersCount: Scalars['Float']['output'];
   followingsCount: Scalars['Float']['output'];
+  isPrivate: Scalars['Boolean']['output'];
   lastName: Scalars['String']['output'];
   posts: PaginatedUserPosts;
   profilePic?: Maybe<Scalars['String']['output']>;
@@ -375,6 +537,22 @@ export type ReplyToCommentMutationVariables = Exact<{
 
 export type ReplyToCommentMutation = { __typename?: 'Mutation', replyToComment: boolean };
 
+export type GetCommentsQueryVariables = Exact<{
+  postId: Scalars['String']['input'];
+  page: Scalars['Float']['input'];
+}>;
+
+
+export type GetCommentsQuery = { __typename?: 'Query', getComments: Array<{ __typename?: 'Comment', _id: string, content: string, createdAt: any, updatedAt: any, postId: { __typename?: 'Post', _id: string }, parentId?: { __typename?: 'Comment', _id: string, content: string } | null, taggedUserIds?: Array<{ __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null }> | null, userId: { __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null } }> };
+
+export type GetRepliesQueryVariables = Exact<{
+  parentId: Scalars['String']['input'];
+  page: Scalars['Float']['input'];
+}>;
+
+
+export type GetRepliesQuery = { __typename?: 'Query', getReplies: { __typename?: 'RepliesResponse', hasMore: boolean, comments: Array<{ __typename?: 'Comment', _id: string, content: string, createdAt: any, updatedAt: any, postId: { __typename?: 'Post', _id: string }, parentId?: { __typename?: 'Comment', _id: string, content: string } | null, taggedUserIds?: Array<{ __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null }> | null, userId: { __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null }, replyToUserId?: { __typename?: 'User', _id: string, username?: string | null } | null }> } };
+
 export type CreatePostMutationVariables = Exact<{
   input: PostInput;
 }>;
@@ -411,19 +589,19 @@ export type GetTimelinePostsQueryVariables = Exact<{
 }>;
 
 
-export type GetTimelinePostsQuery = { __typename?: 'Query', getTimelinePosts: Array<{ __typename?: 'Post', _id: string, caption?: string | null, postType?: PostType | null, postUrl?: string | null, waveUrl?: string | null, createdAt: any, updatedAt: any, user: { __typename?: 'User', _id: string, username?: string | null, profilePic: string }, reactions?: Array<{ __typename?: 'PostReaction', emoji: string, users: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> | null, visibleTo: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> };
+export type GetTimelinePostsQuery = { __typename?: 'Query', getTimelinePosts: Array<{ __typename?: 'Post', _id: string, caption?: string | null, postType?: PostType | null, postUrl?: string | null, waveUrl?: string | null, createdAt: any, updatedAt: any, user: { __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null }, reactions?: Array<{ __typename?: 'PostReaction', emoji: string, users: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> | null, visibleTo: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> };
 
 export type GetPostByIdQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type GetPostByIdQuery = { __typename?: 'Query', getPostById: { __typename?: 'Post', _id: string, caption?: string | null, postType?: PostType | null, postUrl?: string | null, waveUrl?: string | null, createdAt: any, updatedAt: any, user: { __typename?: 'User', _id: string, username?: string | null, profilePic: string, isPrivate?: boolean | null }, reactions?: Array<{ __typename?: 'PostReaction', emoji: string, users: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> | null, visibleTo: Array<{ __typename?: 'User', _id: string, username?: string | null }> } };
+export type GetPostByIdQuery = { __typename?: 'Query', getPostById: { __typename?: 'Post', _id: string, caption?: string | null, postType?: PostType | null, postUrl?: string | null, waveUrl?: string | null, createdAt: any, updatedAt: any, user: { __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null, isPrivate?: boolean | null }, reactions?: Array<{ __typename?: 'PostReaction', emoji: string, users: Array<{ __typename?: 'User', _id: string, username?: string | null }> }> | null, visibleTo: Array<{ __typename?: 'User', _id: string, username?: string | null }> } };
 
 export type MeUserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeUserQuery = { __typename?: 'Query', meUser?: { __typename?: 'User', _id: string, username?: string | null, firstName?: string | null, lastName?: string | null, spotifyId: string, email: string, bio?: string | null, dob?: any | null, type?: UserType | null, isAccountVerified?: boolean | null, isProfileCompleted: boolean, deviceDetails?: string | null, intro: boolean, instagramLink?: string | null, profilePic: string, followers?: Array<string> | null, followings?: Array<string> | null, blockedByMe?: Array<string> | null, isPrivate?: boolean | null, topArtists?: Array<{ __typename?: 'Artist', name?: string | null }> | null, topTracks?: Array<{ __typename?: 'Track', name: string }> | null, recentlyPlayed?: Array<{ __typename?: 'RecentlyPlayed', name: string }> | null } | null };
+export type MeUserQuery = { __typename?: 'Query', meUser?: { __typename?: 'User', _id: string, username?: string | null, firstName?: string | null, lastName?: string | null, spotifyId: string, email: string, bio?: string | null, dob?: any | null, type?: UserType | null, isAccountVerified?: boolean | null, isProfileCompleted: boolean, deviceDetails?: string | null, intro: boolean, instagramLink?: string | null, profilePic?: string | null, followers?: Array<string> | null, followings?: Array<string> | null, blockedByMe?: Array<string> | null, isPrivate?: boolean | null, topArtists?: Array<{ __typename?: 'Artist', name?: string | null }> | null, topTracks?: Array<{ __typename?: 'Track', name: string }> | null, recentlyPlayed?: Array<{ __typename?: 'RecentlyPlayed', name: string }> | null } | null };
 
 export type SaveUserTokenMutationVariables = Exact<{
   input: UserToken;
@@ -469,6 +647,67 @@ export const DeleteCommentDocument = gql`
 export const ReplyToCommentDocument = gql`
     mutation replyToComment($input: CommentInput!) {
   replyToComment(input: $input)
+}
+    `;
+export const GetCommentsDocument = gql`
+    query getComments($postId: String!, $page: Float!) {
+  getComments(postId: $postId, page: $page) {
+    _id
+    postId {
+      _id
+    }
+    parentId {
+      _id
+      content
+    }
+    content
+    taggedUserIds {
+      _id
+      username
+      profilePic
+    }
+    createdAt
+    updatedAt
+    userId {
+      _id
+      username
+      profilePic
+    }
+  }
+}
+    `;
+export const GetRepliesDocument = gql`
+    query getReplies($parentId: String!, $page: Float!) {
+  getReplies(parentId: $parentId, page: $page) {
+    comments {
+      _id
+      postId {
+        _id
+      }
+      parentId {
+        _id
+        content
+      }
+      content
+      taggedUserIds {
+        _id
+        username
+        profilePic
+      }
+      createdAt
+      updatedAt
+      userId {
+        _id
+        username
+        profilePic
+      }
+      replyToUserId {
+        _id
+        username
+      }
+    }
+    hasMore
+  }
 }
     `;
 export const CreatePostDocument = gql`
@@ -641,6 +880,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     replyToComment(variables: ReplyToCommentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReplyToCommentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<ReplyToCommentMutation>({ document: ReplyToCommentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'replyToComment', 'mutation', variables);
+    },
+    getComments(variables: GetCommentsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetCommentsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetCommentsQuery>({ document: GetCommentsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getComments', 'query', variables);
+    },
+    getReplies(variables: GetRepliesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetRepliesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetRepliesQuery>({ document: GetRepliesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getReplies', 'query', variables);
     },
     createPost(variables: CreatePostMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreatePostMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreatePostMutation>({ document: CreatePostDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'createPost', 'mutation', variables);
