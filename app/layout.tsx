@@ -32,16 +32,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { connect, disconnect } = useSocket();
+  const { connect } = useSocket();
   const { meUser, setMeUser } = useUser();
 
   useEffect(() => {
     const fetch = async () => {
       try {
         const data = await sdk.meUser();
-        console.log("gffff");
         if (data.meUser?._id) {
-          console.log(data.meUser, "ss");
           setMeUser(data.meUser as User);
           connect(data.meUser._id);
         }
