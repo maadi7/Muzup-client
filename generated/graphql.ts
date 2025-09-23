@@ -303,7 +303,7 @@ export type Query = {
   getReplies: RepliesResponse;
   getSidebarChats: Array<SidebarChat>;
   getTimelinePosts: Array<Post>;
-  getUnreadNotifications: Scalars['Float']['output'];
+  getUnreadNotifications: Array<Notification>;
   getUserProfileInfo: UserProfileInfo;
   meUser?: Maybe<User>;
   searchUsers: Array<User>;
@@ -321,8 +321,8 @@ export type QueryFetchFriendStatusArgs = {
 
 
 export type QueryGetAllNotificationsArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  page?: InputMaybe<Scalars['Int']['input']>;
+  limit?: Scalars['Int']['input'];
+  page?: Scalars['Int']['input'];
 };
 
 
@@ -538,23 +538,21 @@ export type ReplyToCommentMutationVariables = Exact<{
 
 export type ReplyToCommentMutation = { __typename?: 'Mutation', replyToComment: boolean };
 
-export type GetUnreadNotificationsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetUnreadNotificationsQuery = { __typename?: 'Query', getUnreadNotifications: number };
-
-export type GetAllNotificationsQueryVariables = Exact<{
-  page?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
+export type GetCommentsQueryVariables = Exact<{
+  postId: Scalars['String']['input'];
+  page: Scalars['Float']['input'];
 }>;
 
 
-export type GetAllNotificationsQuery = { __typename?: 'Query', getAllNotifications: { __typename?: 'PaginatedNotifications', hasMore: boolean, notifications: Array<{ __typename?: 'Notification', type: NotificationType, text?: string | null, isRead: boolean, isArchived: boolean, entityType: NotificationEntityType, metadata?: any | null, _id: string, createdAt: any, updatedAt: any, sender: { __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null }, receiver: { __typename?: 'User', _id: string } }> } };
+export type GetCommentsQuery = { __typename?: 'Query', getComments: Array<{ __typename?: 'Comment', _id: string, content: string, createdAt: any, updatedAt: any, postId: { __typename?: 'Post', _id: string }, parentId?: { __typename?: 'Comment', _id: string, content: string } | null, taggedUserIds?: Array<{ __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null }> | null, userId: { __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null } }> };
 
-export type MarkAllReadMutationVariables = Exact<{ [key: string]: never; }>;
+export type GetRepliesQueryVariables = Exact<{
+  parentId: Scalars['String']['input'];
+  page: Scalars['Float']['input'];
+}>;
 
 
-export type MarkAllReadMutation = { __typename?: 'Mutation', markAllRead: boolean };
+export type GetRepliesQuery = { __typename?: 'Query', getReplies: { __typename?: 'RepliesResponse', hasMore: boolean, comments: Array<{ __typename?: 'Comment', _id: string, content: string, createdAt: any, updatedAt: any, postId: { __typename?: 'Post', _id: string }, parentId?: { __typename?: 'Comment', _id: string, content: string } | null, taggedUserIds?: Array<{ __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null }> | null, userId: { __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null }, replyToUserId?: { __typename?: 'User', _id: string, username?: string | null } | null }> } };
 
 export type CreatePostMutationVariables = Exact<{
   input: PostInput;
@@ -604,7 +602,7 @@ export type GetPostByIdQuery = { __typename?: 'Query', getPostById: { __typename
 export type MeUserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeUserQuery = { __typename?: 'Query', meUser?: { __typename?: 'User', _id: string, username?: string | null, firstName?: string | null, lastName?: string | null, spotifyId: string, email: string, bio?: string | null, dob?: any | null, type?: UserType | null, isAccountVerified?: boolean | null, isProfileCompleted: boolean, deviceDetails?: string | null, intro: boolean, instagramLink?: string | null, profilePic: string, followers?: Array<string> | null, followings?: Array<string> | null, blockedByMe?: Array<string> | null, isPrivate?: boolean | null, topArtists?: Array<{ __typename?: 'Artist', name?: string | null }> | null, topTracks?: Array<{ __typename?: 'Track', name: string }> | null, recentlyPlayed?: Array<{ __typename?: 'RecentlyPlayed', name: string }> | null } | null };
+export type MeUserQuery = { __typename?: 'Query', meUser?: { __typename?: 'User', _id: string, username?: string | null, firstName?: string | null, lastName?: string | null, spotifyId: string, email: string, bio?: string | null, dob?: any | null, type?: UserType | null, isAccountVerified?: boolean | null, isProfileCompleted: boolean, deviceDetails?: string | null, intro: boolean, instagramLink?: string | null, profilePic?: string | null, followers?: Array<string> | null, followings?: Array<string> | null, blockedByMe?: Array<string> | null, isPrivate?: boolean | null, topArtists?: Array<{ __typename?: 'Artist', name?: string | null }> | null, topTracks?: Array<{ __typename?: 'Track', name: string }> | null, recentlyPlayed?: Array<{ __typename?: 'RecentlyPlayed', name: string }> | null } | null };
 
 export type SaveUserTokenMutationVariables = Exact<{
   input: UserToken;
@@ -680,40 +678,65 @@ export const ReplyToCommentDocument = gql`
   replyToComment(input: $input)
 }
     `;
-export const GetUnreadNotificationsDocument = gql`
-    query getUnreadNotifications {
-  getUnreadNotifications
+export const GetCommentsDocument = gql`
+    query getComments($postId: String!, $page: Float!) {
+  getComments(postId: $postId, page: $page) {
+    _id
+    postId {
+      _id
+    }
+    parentId {
+      _id
+      content
+    }
+    content
+    taggedUserIds {
+      _id
+      username
+      profilePic
+    }
+    createdAt
+    updatedAt
+    userId {
+      _id
+      username
+      profilePic
+    }
+  }
 }
     `;
-export const GetAllNotificationsDocument = gql`
-    query getAllNotifications($page: Int, $limit: Int) {
-  getAllNotifications(page: $page, limit: $limit) {
-    notifications {
-      sender {
+export const GetRepliesDocument = gql`
+    query getReplies($parentId: String!, $page: Float!) {
+  getReplies(parentId: $parentId, page: $page) {
+    comments {
+      _id
+      postId {
+        _id
+      }
+      parentId {
+        _id
+        content
+      }
+      content
+      taggedUserIds {
         _id
         username
         profilePic
       }
-      type
-      text
-      isRead
-      isArchived
-      entityType
-      metadata
-      _id
       createdAt
-      receiver {
-        _id
-      }
       updatedAt
+      userId {
+        _id
+        username
+        profilePic
+      }
+      replyToUserId {
+        _id
+        username
+      }
     }
     hasMore
   }
-}
-    `;
-export const MarkAllReadDocument = gql`
-    mutation markAllRead {
-  markAllRead
 }
     `;
 export const CreatePostDocument = gql`
@@ -909,14 +932,11 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     replyToComment(variables: ReplyToCommentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReplyToCommentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<ReplyToCommentMutation>({ document: ReplyToCommentDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'replyToComment', 'mutation', variables);
     },
-    getUnreadNotifications(variables?: GetUnreadNotificationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetUnreadNotificationsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetUnreadNotificationsQuery>({ document: GetUnreadNotificationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getUnreadNotifications', 'query', variables);
+    getComments(variables: GetCommentsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetCommentsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetCommentsQuery>({ document: GetCommentsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getComments', 'query', variables);
     },
-    getAllNotifications(variables?: GetAllNotificationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetAllNotificationsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetAllNotificationsQuery>({ document: GetAllNotificationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getAllNotifications', 'query', variables);
-    },
-    markAllRead(variables?: MarkAllReadMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MarkAllReadMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<MarkAllReadMutation>({ document: MarkAllReadDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'markAllRead', 'mutation', variables);
+    getReplies(variables: GetRepliesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetRepliesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetRepliesQuery>({ document: GetRepliesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getReplies', 'query', variables);
     },
     createPost(variables: CreatePostMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreatePostMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreatePostMutation>({ document: CreatePostDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'createPost', 'mutation', variables);
