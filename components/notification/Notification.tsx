@@ -139,7 +139,7 @@ const NotificationComponent: React.FC<NotificationProps> = ({
     switch (noti.type) {
       case NotificationType.Follow:
         Icon = UserPlus;
-        actionText = !user?.followers?.includes(noti.sender._id)
+        actionText = !meUser?.followers?.includes(noti.sender._id)
           ? `${noti.sender.username} requested to follow you`
           : `${noti.sender.username} started following you`;
         break;
@@ -177,7 +177,7 @@ const NotificationComponent: React.FC<NotificationProps> = ({
             {moment(noti.createdAt).fromNow()}
           </span>
         </div>
-        {!user?.followers?.includes(noti.sender._id) &&
+        {!meUser?.followers?.includes(noti.sender._id) &&
         noti.type === NotificationType.Follow ? (
           <div className="">
             <Button

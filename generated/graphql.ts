@@ -303,7 +303,7 @@ export type Query = {
   getReplies: RepliesResponse;
   getSidebarChats: Array<SidebarChat>;
   getTimelinePosts: Array<Post>;
-  getUnreadNotifications: Array<Notification>;
+  getUnreadNotifications: Scalars['Float']['output'];
   getUserProfileInfo: UserProfileInfo;
   meUser?: Maybe<User>;
   searchUsers: Array<User>;
@@ -321,8 +321,8 @@ export type QueryFetchFriendStatusArgs = {
 
 
 export type QueryGetAllNotificationsArgs = {
-  limit?: Scalars['Int']['input'];
-  page?: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -554,6 +554,24 @@ export type GetRepliesQueryVariables = Exact<{
 
 export type GetRepliesQuery = { __typename?: 'Query', getReplies: { __typename?: 'RepliesResponse', hasMore: boolean, comments: Array<{ __typename?: 'Comment', _id: string, content: string, createdAt: any, updatedAt: any, postId: { __typename?: 'Post', _id: string }, parentId?: { __typename?: 'Comment', _id: string, content: string } | null, taggedUserIds?: Array<{ __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null }> | null, userId: { __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null }, replyToUserId?: { __typename?: 'User', _id: string, username?: string | null } | null }> } };
 
+export type GetUnreadNotificationsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetUnreadNotificationsQuery = { __typename?: 'Query', getUnreadNotifications: number };
+
+export type GetAllNotificationsQueryVariables = Exact<{
+  page?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetAllNotificationsQuery = { __typename?: 'Query', getAllNotifications: { __typename?: 'PaginatedNotifications', hasMore: boolean, notifications: Array<{ __typename?: 'Notification', type: NotificationType, text?: string | null, isRead: boolean, isArchived: boolean, entityType: NotificationEntityType, metadata?: any | null, _id: string, createdAt: any, updatedAt: any, sender: { __typename?: 'User', _id: string, username?: string | null, profilePic?: string | null }, receiver: { __typename?: 'User', _id: string } }> } };
+
+export type MarkAllReadMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MarkAllReadMutation = { __typename?: 'Mutation', markAllRead: boolean };
+
 export type CreatePostMutationVariables = Exact<{
   input: PostInput;
 }>;
@@ -739,6 +757,42 @@ export const GetRepliesDocument = gql`
   }
 }
     `;
+export const GetUnreadNotificationsDocument = gql`
+    query getUnreadNotifications {
+  getUnreadNotifications
+}
+    `;
+export const GetAllNotificationsDocument = gql`
+    query getAllNotifications($page: Int, $limit: Int) {
+  getAllNotifications(page: $page, limit: $limit) {
+    notifications {
+      sender {
+        _id
+        username
+        profilePic
+      }
+      type
+      text
+      isRead
+      isArchived
+      entityType
+      metadata
+      _id
+      createdAt
+      receiver {
+        _id
+      }
+      updatedAt
+    }
+    hasMore
+  }
+}
+    `;
+export const MarkAllReadDocument = gql`
+    mutation markAllRead {
+  markAllRead
+}
+    `;
 export const CreatePostDocument = gql`
     mutation createPost($input: PostInput!) {
   createPost(input: $input)
@@ -849,6 +903,8 @@ export const MeUserDocument = gql`
     followings
     blockedByMe
     isPrivate
+    followers
+    followings
   }
 }
     `;
@@ -937,6 +993,15 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     getReplies(variables: GetRepliesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetRepliesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetRepliesQuery>({ document: GetRepliesDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getReplies', 'query', variables);
+    },
+    getUnreadNotifications(variables?: GetUnreadNotificationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetUnreadNotificationsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetUnreadNotificationsQuery>({ document: GetUnreadNotificationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getUnreadNotifications', 'query', variables);
+    },
+    getAllNotifications(variables?: GetAllNotificationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<GetAllNotificationsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetAllNotificationsQuery>({ document: GetAllNotificationsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'getAllNotifications', 'query', variables);
+    },
+    markAllRead(variables?: MarkAllReadMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<MarkAllReadMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<MarkAllReadMutation>({ document: MarkAllReadDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'markAllRead', 'mutation', variables);
     },
     createPost(variables: CreatePostMutationVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<CreatePostMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreatePostMutation>({ document: CreatePostDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'createPost', 'mutation', variables);

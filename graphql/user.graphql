@@ -28,6 +28,8 @@ query meUser {
     followings
     blockedByMe
     isPrivate
+    followers
+    followings
   }
 }
 

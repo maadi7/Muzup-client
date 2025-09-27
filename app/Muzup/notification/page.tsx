@@ -68,7 +68,8 @@ async function getMeUser() {
 async function Page() {
   const data = await getAllNotifications();
   const user = await getMeUser();
-
+  console.log(user?.followings);
+  console.log(user?.followers);
   return (
     <NotificationComponent
       hasMore={data?.hasMore ?? false}
